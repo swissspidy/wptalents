@@ -1,0 +1,22 @@
+{
+  "name"       : "swissspidy/wptalents",
+  "description": "Main Plugin for WPTalents.com",
+  "keywords"   : [
+    "wordpress",
+    "plugin",
+    "wptalents"
+  ],
+  "type"       : "wordpress-plugin",
+  "homepage"   : "https:/github.com/swissspidy/wptalents",
+  "authors"    : [
+    {
+      "name"    : "Pascal Birchler",
+      "email"   : "contact@spinpress.com",
+      "homepage": "https://spinpress.com/"
+    }
+  ],
+  "support"    : {
+    "issues": "https:/github.com/swissspidy/wptalents/issues"
+  },
+  "require"    : {}
+}
