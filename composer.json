@@ -25,6 +25,6 @@
     }
   ],
   "require"     : {
-    "humanmade/custom-meta-boxes": "*@dev"
+    "humanmade/custom-meta-boxes": "dev-master"
   }
 }
