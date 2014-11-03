@@ -107,64 +107,6 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 		return $response;
 	}
 
-	public function api_get_user_meta( $username, $key ) {
-		if ( ! $contributor = get_page_by_path( $username, OBJECT, 'contributor' ) ) {
-			$created = WP_Central_Contributor::create( $username );
-
-			if ( ! $created ) {
-				return new WP_Error( 'json_user_invalid_id', __( "User doesn't exist." ), array( 'status' => 400 ) );
-			}
-		}
-
-		$user_fields = array(
-			'data' => WP_Central_Data_Colector::get_wp_user_data( $contributor, $contributor->post_name, $key )
-		);
-
-		if ( ! $user_fields['data'] ) {
-			return new WP_Error( 'json_user_invalid_id', __( 'This meta key is not an option' ), array( 'status' => 400 ) );
-		}
-
-		$user_fields['meta'] = array(
-			'links' => array(
-				'self'    => json_url( $this->base .'/' . $contributor->post_name ) . '/meta/' . $key,
-				'profile' => json_url( $this->base .'/' . $contributor->post_name ),
-			),
-		);
-
-		return $user_fields;
-	}
-
-	/**
-	 *
-	 * Prepare a User entity from a WP_User instance.
-	 *
-	 * @param WP_Post $talent
-	 *
-	 * @return array
-	 */
-	protected function api_prepare_talent( $talent ) {
-		$user_fields = array(
-			'username'    => $talent->post_name,
-			'name'        => $talent->post_title,
-			'avatar'      => $talent->avatar,
-			'location'    => $talent->location,
-			'company'     => $talent->company,
-			'website'     => $talent->website,
-			'socials'     => $talent->socials,
-			'badges'      => $talent->badges,
-		);
-
-		$user_fields = wp_parse_args( WP_Central_Data_Colector::get_wp_user_data( $talent, $talent->post_name ), $user_fields );
-
-		$user_fields['meta'] = array(
-			'links' => array(
-				'self' => json_url( $this->base . '/' . $talent->post_name ),
-			),
-		);
-
-		return $user_fields;
-	}
-
 	/**
 	 * Prepare post data
 	 *
@@ -176,8 +118,6 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 		// Holds the data for this post.
 		$_post = array( 'ID' => (int) $post['ID'] );
 
-		$post_type = get_post_type_object( $post['post_type'] );
-
 		if ( ! $this->check_read_permission( $post ) ) {
 			return new WP_Error( 'json_user_cannot_read', __( 'Sorry, you cannot read this post.' ), array( 'status' => 401 ) );
 		}
@@ -187,33 +127,42 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 		$GLOBALS['post'] = $post_obj;
 		setup_postdata( $post_obj );
 
+		// Fetch our talent meta
 		$talent_meta = WP_Talents::get_talent_meta( $post_obj );
 
-		// prepare common post fields
+		// Prepare common post fields
 		$post_fields = array(
-			'title'           => get_the_title( $post['ID'] ), // $post['post_title'],
-			'type'            => $post['post_type'],
-			'content'         => apply_filters( 'the_content', $post['post_content'] ),
-			'link'            => get_permalink( $post['ID'] ),
+			'title' => get_the_title( $post['ID'] ), // $post['post_title'],
+			'type'  => $post['post_type'],
+			'link'  => get_permalink( $post['ID'] ),
 		);
 
 		$post_fields_extended = array(
-			'slug'           => $post['post_name'],
-			'excerpt'        => $this->prepare_excerpt( $post['post_excerpt'] ),
-			'byline'         => esc_html( get_post_meta( $post['ID'], 'byline', true ) ),
-			'location'       => esc_html( get_post_meta( $post['ID'], 'byline', true ) ),
-			'website'        => esc_url( get_post_meta( $post['ID'], 'byline', true ) ),
-			'profile'        => $talent_meta['profile'],
-			'plugins'        => $talent_meta['plugins'],
-			'themes'         => $talent_meta['themes'],
-			//'comment_status' => $post['comment_status'],
-			//'sticky'         => ( $post['post_type'] === 'post' && is_sticky( $post['ID'] ) ),
+			'slug'          => $post['post_name'],
+			'excerpt'       => $this->prepare_excerpt( $post['post_excerpt'] ),
+			'content'       => apply_filters( 'the_content', $post['post_content'] ),
+			'byline'        => esc_html( get_post_meta( $post['ID'], 'byline', true ) ),
+			'job'           => (string) get_post_meta( $post['ID'], 'job', true ),
+			'wordpress_vip' => ( 1 == get_post_meta( $post['ID'], 'wordpress_vip', true ) ) ? true : false,
+			'location'      => $talent_meta['map']['name'],
+			'score'         => $talent_meta['score'],
+			'social'        => $talent_meta['social'],
+			'badges'        => $talent_meta['profile']['badges'],
+			'contributions' => array(
+				'codex' => array( 'count' => $talent_meta['codex_count'] ),
+				'props' => array( 'count' => $talent_meta['changeset_count'] ),
+				'core'  => $talent_meta['contributions'],
+			),
+			'plugins'       => $talent_meta['plugins'],
+			'themes'        => $talent_meta['themes'],
+			//'sticky' => ( $post['post_type'] === 'post' && is_sticky( $post['ID'] ) ),
 		);
 
+		// Company itself has no job, and a person can't be a WordPress.com VIP
 		if ( 'person' === $post['post_type'] ) {
-			$post_fields['job'] = (string) get_post_meta( $post['ID'], 'job', true );
+			unset( $post_fields_extended['wordpress_vip'] );
 		} else {
-			$post_fields['wordpress_vip'] = ( 1 == get_post_meta( $post['ID'], 'wordpress_vip', true ) ) ? true : false;
+			unset( $post_fields_extended['job'] );
 		}
 
 		// Dates
@@ -243,8 +192,8 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 
 		// Entity meta
 		$links = array(
-			'self'       => json_url( '/posts/' . $post['ID'] ),
-			'collection' => json_url( '/posts' ),
+			'self'       => json_url( '/talents/' . $post['ID'] ),
+			'collection' => json_url( '/talents' ),
 		);
 
 		$_post['meta'] = array( 'links' => $links );
