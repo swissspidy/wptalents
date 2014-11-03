@@ -87,8 +87,19 @@ class WP_Talents {
 		// Register post type connections
 		add_action( 'p2p_init',                    array( __CLASS__, 'register_connections' ) );
 
+		// Modify CMB field types
+		add_filter( 'cmb_field_types',             array( __CLASS__, 'add_cmb_field_types' ) );
+
 		// Add custom meta boxes for our post type
 		add_action( 'cmb_meta_boxes',              array( __CLASS__, 'add_meta_boxes' ) );
+
+		// Hook into the save_post action for people and companies
+		add_action( 'save_post_company',           array( __CLASS__, 'add_map_on_save_post' ) );
+		add_action( 'save_post_person',            array( __CLASS__, 'add_map_on_save_post' ) );
+
+		// Filter post_class()
+		add_filter( 'post_class',                  array( __CLASS__, 'filter_post_class' ) );
+		add_filter( 'body_class',                  array( __CLASS__, 'filter_post_class' ) );
 
 		// FacetWP
 
@@ -418,14 +429,14 @@ class WP_Talents {
 	 * @param $query
 	 */
 	public static function pre_get_posts( $query ) {
-		if( ! $query->is_main_query() || is_admin() ) {
+		if ( ! $query->is_main_query() || is_admin() ) {
 			return;
 		}
 
 		if ( is_post_type_archive( 'company' ) ) {
 			$query->set( 'post_type', array( 'company', 'person' ) );
-			$query->set( 'orderby',   'name' );
-			$query->set( 'order',     'ASC' );
+			$query->set( 'orderby', 'name' );
+			$query->set( 'order', 'ASC' );
 		}
 	}
 
@@ -515,6 +526,8 @@ class WP_Talents {
 	/**
 	 * Determine if a post exists based on post_name (slug) and post_type.
 	 *
+	 * @todo Make this work when previewing a post
+	 *
 	 * @param string $post_name The post slug.
 	 * @param string $post_type Post Type. Defaults to post
 	 *
@@ -523,7 +536,7 @@ class WP_Talents {
 	private static function post_exists( $post_name, $post_type = 'post' ) {
 		global $wpdb;
 
-		$query = "SELECT ID FROM $wpdb->posts WHERE 1=1";
+		$query = "SELECT ID FROM $wpdb->posts WHERE 1=1 AND post_status = 'publish'";
 		$args  = array();
 
 		if ( ! empty ( $post_name ) ) {
@@ -618,6 +631,19 @@ class WP_Talents {
 	}
 
 	/**
+	 * @param  array $cmb_field_types The CMB field types.
+	 *
+	 * @return array The filtered field types array.
+	 */
+	function add_cmb_field_types( array $cmb_field_types ) {
+		require_once( WP_TALENTS_DIR . 'includes/class-wptalents-cmb-gmap-field.php' );
+
+		$cmb_field_types['gmap'] = 'WP_Talents_CMB_Gmap_Field';
+
+		return $cmb_field_types;
+	}
+
+	/**
 	 * Add custom meta boxes to our post types.
 	 *
 	 * @param  array $meta_boxes An array of existing meta boxes.
@@ -633,18 +659,6 @@ class WP_Talents {
 				'cols' => 4
 			),
 			array(
-				'id'   => 'location',
-				'name' => __( 'Location', 'wptalents' ),
-				'type' => 'text',
-				'cols' => 4
-			),
-			array(
-				'id'   => 'url',
-				'name' => __( 'Website URL', 'wptalents' ),
-				'type' => 'text_url',
-				'cols' => 4
-			),
-			array(
 				'id'   => 'byline',
 				'name' => __( 'Byline', 'wptalents' ),
 				'type' => 'text',
@@ -654,7 +668,7 @@ class WP_Talents {
 
 		$company_details = array(
 			array(
-				'id'   => 'wordpress_vip',
+				'id'   => 'wordpress-com-vip',
 				'name' => __( 'WordPress.com VIP partner', 'wptalents' ),
 				'type' => 'checkbox',
 				'cols' => 4
@@ -666,8 +680,86 @@ class WP_Talents {
 				'id'   => 'job',
 				'name' => __( 'Job Title', 'wptalents' ),
 				'type' => 'text',
+				'cols' => 4
+			),
+		);
+
+		$social_profiles = array( array(
+			'id'          => 'social',
+			'type'        => 'group',
+			'fields' => array(
+				array(
+					'id'   => 'url',
+					'name' => __( 'Website URL', 'wptalents' ),
+					'type' => 'text_url',
+					'cols' => 4
+				),
+				array(
+					'id'   => 'github',
+					'name' => __( 'Github Username', 'wptalents' ),
+					'type' => 'text',
+					'cols' => 4
+				),
+				array(
+					'id'   => 'twitter',
+					'name' => __( 'Twitter Username', 'wptalents' ),
+					'type' => 'text',
+					'cols' => 4
+				),
+				array(
+					'id'   => 'facebook',
+					'name' => __( 'Facebook (Vanity URL)', 'wptalents' ),
+					'type' => 'text',
+					'cols' => 4
+				),
+				array(
+					'id'   => 'google-plus',
+					'name' => __( 'Google+ (ID)', 'wptalents' ),
+					'type' => 'text',
+					'cols' => 4
+				),
+				array(
+					'id'   => 'linkedin',
+					'name' => __( 'LinkedIn URL', 'wptalents' ),
+					'type' => 'text_url',
+					'cols' => 4
+				),
+			)
+		) );
+
+		$dawn_patrol = array(
+			array(
+				'id'   => 'dawnpatrol',
+				'name' => __( 'Dawn Patrol URL', 'wptalents' ),
+				'type' => 'url',
 				'cols' => 6
 			),
+			array(
+				'id'   => 'dawnpatrol-video',
+				'name' => __( 'Dawn Patrol Video URL', 'wptalents' ),
+				'type' => 'url',
+				'cols' => 6
+			),
+		);
+
+		$location = array(
+			array(
+				'id'   => 'location',
+				'name' => __( 'Location', 'wptalents' ),
+				'desc' => __( "Stores name, coordinates and elevation.", 'wptalents' ),
+				'type' => 'gmap',
+			),
+		);
+
+		$meta_boxes[] = array(
+			'title'    => __( 'Location', 'wptalents' ),
+			'pages'    => array(
+				'person',
+				'company',
+			),
+			'context'  => 'advanced',
+			'priority' => 'high',
+			'fields'   => $location
 		);
 
 		$meta_boxes[] = array(
@@ -675,7 +767,7 @@ class WP_Talents {
 			'pages'    => 'company',
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => array_merge( $talent_details, $company_details )
+			'fields'   => array_merge( $talent_details, $company_details, $social_profiles )
 		);
 
 		$meta_boxes[] = array(
@@ -683,10 +775,111 @@ class WP_Talents {
 			'pages'    => 'person',
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => array_merge( $talent_details, $person_details )
+			'fields'   => array_merge( $talent_details, $person_details, $social_profiles )
+		);
+
+		$meta_boxes[] = array(
+			'title'    => __( 'Dawn Patrol', 'wptalents' ),
+			'pages'    => 'person',
+			'context'  => 'advanced',
+			'priority' => 'high',
+			'fields'   => $dawn_patrol
 		);
 
 		return $meta_boxes;
+	}
+
+	/**
+	 * Fetches the map of the talent's location and sets it
+	 * as the post thumbnail.
+	 *
+	 * @param int $post_id The ID of the current post.
+	 */
+
+	public static function add_map_on_save_post( $post_id ) {
+		// If this is just a revision, don't proceed
+		if ( wp_is_post_revision( $post_id ) )
+			return;
+
+		// Return early if the post already
+		if ( has_post_thumbnail( $post_id ) ) {
+			return;
+		}
+
+		// Get the talent's location data
+		$location = WP_Talents::get_talent_meta( get_the_ID(), 'location' );
+
+		if ( empty( $location['name'] ) ) {
+			return;
+		}
+
+		$map_url = sprintf(
+			'https://maps.googleapis.com/maps/api/staticmap?center=%s&scale=2&zoom=6&size=600x320&maptype=roadmap',
+			urlencode( $location['name'] )
+		);
+
+		$tmp = download_url( $map_url );
+
+		// Set variables for storage
+		$file_array = array(
+			'name'     => get_post( $post_id )->post_name . '-map.png',
+			'tmp_name' => $tmp
+		);
+
+		// If error storing temporarily, unlink
+		if ( is_wp_error( $tmp ) ) {
+			@unlink( $file_array['tmp_name'] );
+			$file_array['tmp_name'] = '';
+		}
+
+		// do the validation and storage stuff
+		$id = media_handle_sideload( $file_array, $post_id );
+
+		// If error storing permanently, unlink
+		if ( is_wp_error( $id ) ) {
+			@unlink( $file_array['tmp_name'] );
+		}
+
+		// Set map as post thumbnail
+		set_post_thumbnail( $post_id, $id );
+	}
+
+	/**
+	 * Filters the post class and body class output.
+	 *
+	 * @see post_class()
+	 *
+	 * @param  array $classes Array of post classes.
+	 *
+	 * @return array          The modified classes array.
+	 */
+	public static function filter_post_class( $classes ) {
+		/** @var WP_QUery $wp_query */
+		global $wp_query, $post;
+
+		if ( ! in_array( $post->post_type, array( 'person', 'company' ) ) ) {
+			return $classes;
+		}
+
+		// Add default classes
+		$classes[] = 'talent';
+
+		if ( 'post_class' === current_filter() && $post != $wp_query->queried_object ) {
+			$classes[] = 'talent--small';
+		}
+
+		if ( ! has_post_thumbnail( $post->ID ) ) {
+			return $classes;
+		}
+
+		$thumbnail = get_attached_file( get_post_thumbnail_id( $post->ID ) );
+
+		// Add map thumbnail class
+		if ( $thumbnail && 0 === strpos( basename( $thumbnail ), $post->post_name . '-map' )  ) {
+			$classes[] = 'has-post-thumbnail-map';
+		}
+
+		return $classes;
 	}
 
 	/**
@@ -709,23 +902,65 @@ class WP_Talents {
 			return false;
 		}
 
+		/** @var WP_Talents_Collector $collector */
 		$collector = new WP_Talents_Collector( $post );
 
-		if ( 'profile' === $type ) {
-			return $collector->get_profile();
-		} else if ( 'plugins' === $type ) {
-			return $collector->get_plugins();
-		} else if ( 'themes' === $type ) {
-			return $collector->get_themes();
-		} else if ( 'score' === $type ) {
-			return $collector->get_score();
-		} else {
-			// Return all meta
-			return array(
-				'profile' => $collector->get_profile(),
-				'plugins' => $collector->get_plugins(),
-				'themes'  => $collector->get_themes(),
-			);
+		switch ( $type ) {
+			case 'profile':
+				return $collector->get_profile();
+				break;
+			case 'badges':
+				return ( $badges = $collector->get_profile()['badges'] ) ? $badges : array();
+			case 'plugins':
+				return $collector->get_plugins();
+				break;
+			case 'themes':
+				return $collector->get_themes();
+				break;
+			case 'score':
+				return $collector->get_score();
+				break;
+			case 'social':
+				return $collector->get_social_links();
+				break;
+			case 'dawnpatrol':
+				if ( ! $profile = esc_url( get_post_meta( $post->ID, 'dawnpatrol', true ) ) ) {
+					return false;
+				}
+
+				return array(
+					'profile' => $profile,
+					'video'   => esc_url( get_post_meta( $post->ID, 'dawnpatrol-video', true ) ),
+				);
+			case 'map':
+				return $collector->get_map_data();
+				break;
+			case 'location':
+				$location = get_post_meta( $post->ID, 'location', true );
+
+				if ( is_string( $location ) ) {
+					return array(
+						'name' => $location
+					);
+				}
+
+				return $location;
+				break;
+			default:
+				// Return all meta
+				return array(
+					'score'           => $collector->get_score(),
+					'social'          => $collector->get_social_links(),
+					'dawnpatrol'      => self::get_talent_meta( $post, 'dawnpatrol' ),
+					'profile'         => $collector->get_profile(),
+					'map'             => $collector->get_map_data(),
+					'plugins'         => $collector->get_plugins(),
+					'themes'          => $collector->get_themes(),
+					'contributions'   => $collector->get_contributions(),
+					'codex_count'     => $collector->get_codex_count(),
+					'changeset_count' => $collector->get_changeset_count(),
+				);
+				break;
 		}
 	}
 
@@ -737,7 +972,7 @@ class WP_Talents {
 	 * @return mixed            The avatar URL on success,
 	 *                          false if the post does not exist.
 	 */
-	public static function get_avatar( $post = null, $size = 128 ) {
+	public static function get_avatar( $post = null, $size = 144 ) {
 		$profile = self::get_talent_meta( $post, 'profile' );
 
 		if ( ! $profile ) {
@@ -792,12 +1027,12 @@ class WP_Talents {
 	 * Filter the FacetWP pagination output.
 	 *
 	 * @param  string $output
-	 * @param  array $params
+	 * @param  array  $params
 	 *
 	 * @return string
 	 */
 	public static function facetwp_pager_html( $output, $params ) {
-		$output     = '';
+		$output = '';
 
 		$page       = (int) $params['page'];
 		$per_page   = (int) $params['per_page'];
@@ -858,17 +1093,24 @@ class WP_Talents {
 			$output .= '<a class="facetwp-page last-page" data-page="' . $total_pages . '">&raquo;</a>';
 		}
 
-
 		return $output;
 	}
 
-	public static function api_init( $server ) {
+	/**
+	 * Initialize our API endpoint.
+	 *
+	 * @param WP_JSON_ResponseHandler $server
+	 */
+	public static function api_init( WP_JSON_ResponseHandler $server ) {
 		require_once dirname( __FILE__ ) . '/class-wptalents-api.php';
 
 		$wptalents_api = new WP_Talents_API( $server );
 		$wptalents_api->register_filters();
 	}
 
+	/**
+	 * @return string The WP-API prefix.
+	 */
 	public static function api_url_prefix() {
 		return 'api';
 	}
