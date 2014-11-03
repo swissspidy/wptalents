@@ -7,7 +7,7 @@
     "wptalents"
   ],
   "type"       : "wordpress-plugin",
-  "homepage"   : "https:/github.com/swissspidy/wptalents",
+  "homepage"   : "https://github.com/swissspidy/wptalents",
   "authors"    : [
     {
       "name"    : "Pascal Birchler",
@@ -16,7 +16,15 @@
     }
   ],
   "support"    : {
-    "issues": "https:/github.com/swissspidy/wptalents/issues"
+    "issues": "https://github.com/swissspidy/wptalents/issues"
   },
-  "require"    : {}
+  "repositories": [
+    {
+      "type": "git",
+      "url" : "https://github.com/humanmade/Custom-Meta-Boxes"
+    }
+  ],
+  "require"     : {
+    "humanmade/custom-meta-boxes": "dev-master"
+  }
 }

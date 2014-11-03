@@ -26,8 +26,12 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-// Define our plugin dir
-define( 'WP_TALENTS_DIR', plugin_dir_path( __FILE__ ) );
+// Define our constants
+( ! defined( 'WP_TALENTS_DIR') ) &&	define( 'WP_TALENTS_DIR', plugin_dir_path( __FILE__ ) );
+( ! defined( 'WP_TALENTS_URL' ) ) && define( 'WP_TALENTS_URL', plugins_url( '', __FILE__ ) );
+
+// Require Composer Autoloader
+require 'vendor/autoload.php';
 
 /**
  * General functionality
