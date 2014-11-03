@@ -32,9 +32,19 @@ class WP_Talents_Collector {
 			return false;
 		}
 
+		$may_renew = true;
+
+		if (
+			( defined( JSON_REQUEST ) && JSON_REQUEST ) ||
+	        ( defined( DOING_AJAX ) && DOING_AJAX ) ||
+			isset( $_POST['action'] )
+		)	{
+			$may_renew = false;
+		}
+
 		$defaults = array(
 			'username' => get_post_meta( $this->post->ID, 'wordpress-username', true ),
-			'ajax'     => ( defined( DOING_AJAX ) && DOING_AJAX || isset( $_POST ) ) ? true : false,
+			'may_renew'  => $may_renew
 		);
 
 		$this->options = wp_parse_args( $args, $defaults );
@@ -48,10 +58,10 @@ class WP_Talents_Collector {
 		$score     = get_post_meta( $this->post->ID, '_score', true );
 		$score_exp = get_post_meta( $this->post->ID, '_score_expiration', true );
 
-		if ( ! $this->options->is_ajax &&
-			( ! ( $score || $score_exp ) ||
-				( isset( $score_exp ) && time() >= $score_exp )
-			)
+		if ( $this->options['may_renew'] &&
+		     ( ! ( $score || $score_exp ) ||
+		       ( isset( $score_exp ) && time() >= $score_exp )
+		     )
 		) {
 			add_action( 'shutdown', array( $this, '_calculate_score' ) );
 		}
@@ -64,44 +74,48 @@ class WP_Talents_Collector {
 	}
 
 	/**
+	 * Calculates the score of the current talent.
 	 *
-	 * @access private
-	 * @return bool
+	 * @access protected
+	 *
+	 * @return int The score, with a minimum value of 1.
 	 */
 	public function _calculate_score() {
+		// Minimum value
 		$score = 1;
 
 		// Calculate plugins score
 		$plugins = (array) $this->get_plugins();
 
-		$avg_downloads = array();
+		// Store the download counts in this array
+		$total_downloads = array();
 
-		$old_plugins = 0;
-
+		// Set today's date
 		$now = new DateTime( 'now' );
 
-		foreach( $plugins as $plugin ) {
+		// Loop through plugins
+		foreach ( $plugins as $plugin ) {
 			// Check when the plugin was last updated
 			$plugin_updated = new DateTime( $plugin->last_updated );
-			$date_diff = $now->diff($plugin_updated);
+			$date_diff      = $now->diff( $plugin_updated );
 
 			// Don't take into account plugins that haven't been updated for 2+ years
 			if ( 2 >= $date_diff->format( '%y' ) ) {
-				$old_plugins++;
-
 				continue;
 			}
 
+			// Adjust score based on the plugin's rating
 			$score += 1 + 1 * ( $plugin->rating / 100 );
 
-
-			$avg_downloads[] = $plugin->downloaded;
+			// Add to downloads array
+			$total_downloads[] = $plugin->downloaded;
 		}
 
 		// Check the average downloads count using the median value
-		sort( $avg_downloads, SORT_NUMERIC );
-		$avg_downloads = $avg_downloads[ round( ( count( $avg_downloads ) - $old_plugins ) / 2 ) -1 ];
+		sort( $total_downloads, SORT_NUMERIC );
+		$avg_downloads = $total_downloads[ round( ( count( $total_downloads ) ) / 2 ) - 1 ];
 
+		// Adjust score based on average downloads
 		if ( $avg_downloads > 100000 ) {
 			$score += 10;
 		} else if ( $avg_downloads > 50000 ) {
@@ -117,18 +131,23 @@ class WP_Talents_Collector {
 		// Calculate themes score
 		$themes = (array) $this->get_themes();
 
-		$avg_downloads = array();
+		// Store the download counts in this array
+		$total_downloads = array();
 
-		foreach( $themes as $theme ) {
+		// Loop through themes
+		foreach ( $themes as $theme ) {
+			// Adjust score based on the theme's rating
 			$score += 1 + 1 * ( $theme->rating / 100 );
 
-			$avg_downloads[] = $theme->downloaded;
+			// Add to downloads array
+			$total_downloads[] = $theme->downloaded;
 		}
 
 		// Check the average downloads count using the median value
-		sort( $avg_downloads, SORT_NUMERIC );
-		$avg_downloads = $avg_downloads[ round( count( $avg_downloads ) / 2 ) -1 ];
+		sort( $total_downloads, SORT_NUMERIC );
+		$avg_downloads = $total_downloads[ round( count( $total_downloads ) / 2 ) - 1 ];
 
+		// Adjust score based on average downloads
 		if ( $avg_downloads > 100000 ) {
 			$score += 15;
 		} else if ( $avg_downloads > 50000 ) {
@@ -145,8 +164,9 @@ class WP_Talents_Collector {
 		$profile = $this->get_profile();
 
 		if ( is_array( $profile['badges'] ) ) {
+			// Loop through badges, adjust score depending on type
 			foreach ( $profile['badges'] as $badge ) {
-				switch( $badge ) {
+				switch ( $badge ) {
 					case 'Core Team':
 						$score += 50;
 						break;
@@ -172,6 +192,49 @@ class WP_Talents_Collector {
 			}
 		}
 
+		// Adjust score based on number of core contributions
+		$contributions = $this->get_contributions();
+		$contribution_types = array();
+
+		// Save number of contributions in this array
+		foreach( $contributions as $contribution ) {
+			$contribution_types[$contribution]++;
+		}
+
+		// Depending on role the score will be higher or lower
+		foreach( $contribution_types as $type => $count ) {
+			switch ( $type ) {
+				case 'Core Contributor':
+					$factor = 2;
+					break;
+				case 'Core Committer':
+					$factor = 3;
+					break;
+				case 'Core Developer':
+					$factor = 4;
+					break;
+				case 'Lead Developer':
+					$factor = 5;
+					break;
+				case 'Release Lead':
+					$factor = 6;
+					break;
+				default:
+					$factor = 1;
+					break;
+			}
+
+			$score += $factor * $count;
+		}
+
+		// Adjust score based on number of codex contributions
+		$codex_count = $this->get_codex_count();
+		$score += ( $codex_count / 20 < 20 ) ? $codex_count / 20 : 20;
+
+		// Adjust score based on number of props
+		$changeset_count = $this->get_changeset_count();
+		$score += ( $changeset_count / 20 < 20 ) ? $changeset_count / 20 : 20;
+
 		// Get median score for the company
 		if ( 'company' === get_post_type( $this->post ) ) {
 			$team_score = 0;
@@ -189,7 +252,7 @@ class WP_Talents_Collector {
 			) );
 
 			/** @var WP_Post $person */
-			foreach( $people as $person ) {
+			foreach ( $people as $person ) {
 				$person_collector = new self( $person->ID );
 				$team_score += $person_collector->get_score();
 
@@ -217,9 +280,10 @@ class WP_Talents_Collector {
 			return false;
 		}
 
+
 		$data = get_post_meta( $this->post->ID, '_themes', true );
 
-		if ( ! $this->options->is_ajax &&
+		if ( $this->options['may_renew'] &&
 		     ( ! $data ||
 		       ( isset( $data['expiration'] ) &&
 		         time() >= $data['expiration'] ) )
@@ -235,7 +299,8 @@ class WP_Talents_Collector {
 	}
 
 	/**
-	 * @access private
+	 * @access protected
+	 *
 	 * @return bool
 	 */
 	public function _retrieve_themes() {
@@ -282,7 +347,7 @@ class WP_Talents_Collector {
 
 		$data = get_post_meta( $this->post->ID, '_plugins', true );
 
-		if ( ! $this->options->is_ajax &&
+		if ( $this->options['may_renew'] &&
 		     ( ! $data ||
 		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
 		) {
@@ -297,7 +362,8 @@ class WP_Talents_Collector {
 	}
 
 	/**
-	 * @access private
+	 * @access protected
+	 *
 	 * @return mixed
 	 */
 	public function _retrieve_plugins() {
@@ -339,7 +405,7 @@ class WP_Talents_Collector {
 	public function get_profile() {
 		$data = get_post_meta( $this->post->ID, '_profile', true );
 
-		if ( ! $this->options->is_ajax &&
+		if ( $this->options['may_renew'] &&
 		     ( ! $data ||
 		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
 		) {
@@ -354,7 +420,7 @@ class WP_Talents_Collector {
 	}
 
 	/**
-	 * @param string $username The WordPress.org username.
+	 * @access protected
 	 *
 	 * @return array
 	 */
@@ -379,7 +445,6 @@ class WP_Talents_Collector {
 		$location = $finder->query( '//li[@id="user-location"]' );
 		$website  = $finder->query( '//li[@id="user-website"]/a' );
 		$company  = $finder->query( '//li[@id="user-company"]' );
-		$socials  = $finder->query( '//ul[@id="user-social-media-accounts"]/li/a' );
 		$badges   = $finder->query( '//ul[@id="user-badges"]/li/div' );
 
 		$data = array(
@@ -388,7 +453,6 @@ class WP_Talents_Collector {
 			'location' => trim( $location->item( 0 )->nodeValue ),
 			'company'  => '',
 			'website'  => '',
-			'socials'  => array(),
 			'badges'   => array(),
 		);
 
@@ -400,12 +464,6 @@ class WP_Talents_Collector {
 			$data['website'] = trim( $website->item( 0 )->getAttribute( 'href' ) );
 		}
 
-		foreach ( $socials as $item ) {
-			$icon = $item->getElementsByTagName( "div" );
-
-			$data['socials'][ $icon->item( 0 )->getAttribute( 'title' ) ] = $item->getAttribute( 'href' );
-		}
-
 		foreach ( $badges as $badge ) {
 			$data['badges'][] = $badge->getAttribute( 'title' );
 		}
@@ -415,12 +473,125 @@ class WP_Talents_Collector {
 			'expiration' => time() + HOUR_IN_SECONDS * 12,
 		);
 
-		update_post_meta( $this->post->ID, '_profile',  $data );
+		update_post_meta( $this->post->ID, '_profile', $data );
 
 		return $data;
 	}
 
-	public function get_contributions_of_user( $username ) {
+	public function get_social_links() {
+		$social_links = array();
+
+		$meta_fields = array_merge(
+			array( 'wordpressdotorg' => get_post_meta( $this->post->ID, 'wordpress-username', true ) ),
+			(array) get_post_meta( $this->post->ID, 'social', true )
+		);
+
+		foreach ( $meta_fields as $field => $value ) {
+			if ( empty ( $value ) ) {
+				continue;
+			}
+
+			switch ( $field ) {
+				case 'wordpressdotorg':
+					$social_links[$field] = array(
+						'name' => __( 'WordPress.org', 'wptalents' ),
+						'url'  => 'https://profiles.wordpress.org/' . $value,
+					);
+					break;
+				case 'url':
+					$social_links[ $field ] = array(
+						'name' => __( 'Website', 'wptalents' ),
+						'url'  => $value,
+					);
+					break;
+				case 'linkedin':
+					$social_links[ $field ] = array(
+						'name' => __( 'LinkedIn', 'wptalents' ),
+						'url'  => $value,
+					);
+					break;
+				case 'github':
+					$social_links[ $field ] = array(
+						'name' => __( 'GitHub', 'wptalents' ),
+						'url'  => 'https://github.com/' . $value,
+					);
+					break;
+				case 'twitter':
+					$social_links[ $field ] = array(
+						'name' => __( 'Twitter', 'wptalents' ),
+						'url'  => 'https://twitter.com/' . $value,
+					);
+					break;
+				case 'facebook':
+					$social_links[ $field ] = array(
+						'name' => __( 'Facebook', 'wptalents' ),
+						'url'  => 'https://www.facebook.com/' . $meta,
+					);
+					break;
+				case 'google-plus':
+					$social_links[ $field ] = array(
+						'name' => __( 'Google+', 'wptalents' ),
+						'url'  => 'https://plus.google.com/' . $value,
+					);
+					break;
+				default:
+					break;
+			}
+		}
+
+		return $social_links;
+	}
+
+	/**
+	 * Gets the map data of a talent.
+	 *
+	 * If it's a company, it returns the locations of all
+	 * team members so we can show one big map.
+	 *
+	 * @return array Location data as an array
+	 */
+	public function get_map_data() {
+		$all_locations = array();
+
+		$location = WP_Talents::get_talent_meta( $this->post->ID, 'location' );
+
+		if ( empty( $location['lat'] ) || empty( $location['long'] ) ) {
+			return false;
+		}
+
+		$all_locations[] = array(
+			'id'    => $this->post->ID,
+			'title' => $this->post->post_title,
+			'name'  => $location['name'],
+			'lat'   => $location['lat'],
+			'long'  => $location['long'],
+		);
+
+		if ( 'company' === $this->post->post_type ) {
+			// Find connected posts
+			$people = get_posts( array(
+				'connected_type'   => 'team',
+				'connected_items'  => $this->post,
+				'nopaging'         => true,
+				'suppress_filters' => false
+			) );
+
+			/** @var WP_Post $person */
+			foreach ( $people as $person ) {
+				$person_collector = new self( $person->ID );
+
+				if ( ! $person_location = $person_collector->get_map_data() ) {
+					continue;
+				}
+
+				$all_locations = array_merge( $all_locations, $person_location );
+			}
+		}
+
+		return $all_locations;
+	}
+
+	public function get_contributions() {
 		global $wp_version;
 
 		$version = number_format( $wp_version, 1, '.', '' );
@@ -429,7 +600,7 @@ class WP_Talents_Collector {
 		while ( $version ) {
 			$version = number_format( $version, 1, '.', '' );
 
-			$role = $this->_loop_wp_version( $version, $username );
+			$role = $this->_loop_wp_version( $version, $this->options['username'] );
 
 			if ( false !== $role ) {
 				if ( $role ) {
@@ -437,8 +608,7 @@ class WP_Talents_Collector {
 				}
 
 				$version -= 0.1;
-			}
-			else {
+			} else {
 				$version = false;
 			}
 		}
@@ -446,8 +616,15 @@ class WP_Talents_Collector {
 		return $contributions;
 	}
 
-	private function _loop_wp_version( $version, $username = false ) {
-		$credits  = $this->_get_credits( $version );
+	/**
+	 * @param string $version The WP version to check.
+	 *
+	 * @return bool|string| The user's role on success, false otherwise.
+	 */
+	protected function _loop_wp_version( $version ) {
+		if ( false === ( $credits = get_transient( 'wordpress-credits-' . $version ) ) ) {
+			$credits = $this->_get_credits( $version );
+		}
 
 		if ( $credits ) {
 
@@ -457,32 +634,25 @@ class WP_Talents_Collector {
 				}
 
 				foreach ( $group_data['data'] as $person_username => $person_data ) {
-					if ( strtolower( $person_username ) == $username ) {
-						$role = '';
-
+					if ( strtolower( $person_username ) == $this->options['username'] ) {
 						if ( 'titles' == $group_data['type'] ) {
 							if ( $person_data[3] ) {
 								$role = $person_data[3];
-							}
-							else if ( $group_data['name'] ) {
+							} else if ( $group_data['name'] ) {
 								$role = $group_data['name'];
-							}
-							else {
+							} else {
 								$role = ucfirst( str_replace( '-', ' ', $group_slug ) );
 							}
 
 							$role = rtrim( $role, 's' );
-						}
-						else {
-							$role = __( 'Core Contributor', 'wpcentral-api' );
+						} else {
+							$role = __( 'Core Contributor', 'wptalents' );
 						}
 
 						return $role;
 					}
 				}
 			}
-
-			return null;
 		}
 
 		return false;
@@ -495,13 +665,13 @@ class WP_Talents_Collector {
 	 *
 	 * @return array|bool A list of all of the contributors, or false on error.
 	 */
-	public function _get_credits( $wp_version ) {
+	protected function _get_credits( $wp_version, $locale = '' ) {
 		// We can't request data before this.
 		if ( version_compare( $wp_version, '3.2', '<' ) ) {
 			return false;
 		}
 
-		$response = wp_remote_get( 'http://api.wordpress.org/core/credits/1.1/?version=' . $wp_version . '&locale=' .$locale );
+		$response = wp_remote_get( 'http://api.wordpress.org/core/credits/1.1/?version=' . $wp_version . '&locale=' . $locale );
 
 		if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
 			return false;
@@ -513,97 +683,52 @@ class WP_Talents_Collector {
 			return false;
 		}
 
+		set_transient( 'wordpress-credits-' . $wp_version, $results, 12 * HOUR_IN_SECONDS );
+
 		return $results;
 	}
 
 	/**
-	 * Retrieve language packs
-	 *
-	 * @param string $wp_version The WordPress version.
-	 *
-	 * @return array|bool A list of all locales with language packs, or false on error.
+	 * @access public
+	 * @return mixed
 	 */
-	public function get_language_packs( $wp_version ) {
-		// We can't request data before this.
-		if ( version_compare( $wp_version, '4.0', '<' ) ) {
+	public function get_changeset_count() {
+		if ( '' === $this->options['username'] ) {
 			return false;
 		}
 
-		$response = wp_remote_get( 'http://api.wordpress.org/translations/core/1.0/?version=' . $wp_version );
+		$data = get_post_meta( $this->post->ID, '_changeset_count', true );
 
-		if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
-			return false;
+		if ( $this->options['may_renew'] &&
+		     ( ! $data ||
+		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		) {
+			add_action( 'shutdown', array( $this, '_retrieve_changeset_count' ) );
 		}
 
-		$results = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( ! is_array( $results ) ) {
-			return false;
+		if ( ! $data ) {
+			return 0;
 		}
 
-		return $results;
+		return $data['data'];
 	}
 
-	public function get_changeset_items( $username ) {
-		if ( ! $username ) {
-			return false;
-		}
-
-		$items = array();
-
+	/**
+	 * @access protected
+	 *
+	 * @return array|bool
+	 */
+	public function _retrieve_changeset_count() {
 		$results_url = add_query_arg(
 			array(
-				'q'             => 'props+' . $username,
-				'noquickjump'   => '1',
-				'changeset'     => 'on'
+				'q'           => 'props+' . $this->options['username'],
+				'noquickjump' => '1',
+				'changeset'   => 'on'
 			),
 			'https://core.trac.wordpress.org/search'
 		);
-		$response = wp_remote_get( $results_url );
 
-		if ( 200 == wp_remote_retrieve_response_code( $response ) ) {
-			$results  = wp_remote_retrieve_body( $response );
-
-			$results  = preg_replace( '/\s+/', ' ', $results );
-			$results  = str_replace( PHP_EOL, '', $results );
-			$pattern  = '/<dt><a href="(.*?)" class="searchable">\[(.*?)\]: ((?s).*?)<\/a><\/dt>\s*(<dd class="searchable">.*?. #(.*?) .*?.<\/dd>)/';
-
-			preg_match_all( $pattern, $results, $matches, PREG_SET_ORDER );
-
-			foreach ( $matches as $match ) {
-				array_shift( $match );
-
-				$new_match = array(
-					'link'          => 'https://core.trac.wordpress.org' . $match[0],
-					'changeset'     => intval($match[1]),
-					'description'   => $match[2],
-					'ticket'        => isset( $match[3] ) ? intval($match[4]) : '',
-				);
-
-				array_push( $items, $new_match );
-			}
-
-		}
-
-		return $items;
-	}
-
-	public function get_changeset_count( $username ) {
-		if ( ! $username ) {
-			return false;
-		}
-
-		$count = 0;
-
-		$results_url = add_query_arg(
-			array(
-				'q'             => 'props+' . $username,
-				'noquickjump'   => '1',
-				'changeset'     => 'on'
-			),
-			'https://core.trac.wordpress.org/search'
-		);
-		$response = wp_remote_get( $results_url );
+		$response    = wp_remote_get( $results_url );
 
 		if ( 200 == wp_remote_retrieve_response_code( $response ) ) {
 			$results = wp_remote_retrieve_body( $response );
@@ -612,77 +737,81 @@ class WP_Talents_Collector {
 			preg_match( $pattern, $results, $matches );
 
 			$count = intval( $matches[1] );
+
+			$data = array(
+				'data'       => $count,
+				'expiration' => time() + HOUR_IN_SECONDS * 12,
+			);
+
+			update_post_meta( $this->post->ID, '_changeset_count', $data );
+
+			return $data;
 		}
 
-		return $count;
+		return false;
 	}
 
-	public function get_codex_items( $username, $limit = 10 ) {
-		if ( ! $username ) {
+	/**
+	 * @access public
+	 * @return mixed
+	 */
+	public function get_codex_count() {
+		if ( '' === $this->options['username'] ) {
 			return false;
 		}
 
-		$items = array();
+		$data = get_post_meta( $this->post->ID, '_codex_count', true );
 
-		$results_url = add_query_arg( array(
-			'action'    => 'query',
-			'list'      => 'usercontribs',
-			'ucuser'    => $username,
-			'uclimit'   => $limit,
-			'ucdir'     => 'older',
-			'format'    => 'json'
-		), 'https://codex.wordpress.org/api.php' );
-		$response = wp_remote_get( $results_url );
-
-		if ( 200 == wp_remote_retrieve_response_code( $response ) ) {
-			$results   = wp_remote_retrieve_body( $response );
-			$raw       = json_decode( $results );
-
-			foreach ( $raw->query->usercontribs as $item ) {
-				$count = 0;
-				$clean_title = preg_replace( '/^Function Reference\//', '', (string) $item->title, 1, $count );
-
-				$new_item = array(
-					'title'         => $clean_title,
-					'description'   => (string) $item->comment,
-					'revision'      => (int) $item->revid,
-					'function_ref'  => (bool) $count
-				);
-
-				array_push( $items, $new_item );
-			}
+		if ( $this->options['may_renew'] &&
+		     ( ! $data ||
+		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		) {
+			add_action( 'shutdown', array( $this, '_retrieve_codex_count' ) );
 		}
 
-		return $items;
+		if ( ! $data ) {
+			return 0;
+		}
+
+		return $data['data'];
 	}
 
-	public function get_codex_count( $username ) {
-		if ( ! $username ) {
-			return false;
-		}
-
-		$count = 0;
-
+	/**
+	 * @access protected
+	 *
+	 * @return array|bool
+	 */
+	public function _retrieve_codex_count() {
 		$results_url = add_query_arg(
 			array(
-				'action'    =>  'query',
-				'list'      =>  'users',
-				'ususers'   =>  $username,
-				'usprop'    =>  'editcount',
-				'format'    =>  'json'
+				'action'  => 'query',
+				'list'    => 'users',
+				'ususers' => $this->options['username'],
+				'usprop'  => 'editcount',
+				'format'  => 'json'
 			),
 			'https://codex.wordpress.org/api.php'
 		);
-		$response = wp_remote_get( $results_url );
+
+		$response    = wp_remote_get( $results_url );
 
 		if ( 200 == wp_remote_retrieve_response_code( $response ) ) {
-			$results  = wp_remote_retrieve_body( $response );
+			$results = wp_remote_retrieve_body( $response );
 
 			$raw   = json_decode( $results );
 			$count = (int) $raw->query->users[0]->editcount;
+
+			$data = array(
+				'data'       => $count,
+				'expiration' => time() + HOUR_IN_SECONDS * 12,
+			);
+
+			update_post_meta( $this->post->ID, '_codex_count', $data );
+
+			return $data;
 		}
 
-		return $count;
+		return false;
 	}
 
 }
