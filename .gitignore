@@ -1,0 +1,6 @@
+# General
+.DS_Store
+
+# Vendor (e.g. Composer)
+vendor/*
+!vendor/.gitkeep
