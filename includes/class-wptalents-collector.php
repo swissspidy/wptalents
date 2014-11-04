@@ -35,8 +35,8 @@ class WP_Talents_Collector {
 		$may_renew = true;
 
 		if (
-			( defined( JSON_REQUEST ) && JSON_REQUEST ) ||
-	        ( defined( DOING_AJAX ) && DOING_AJAX ) ||
+			( defined( 'JSON_REQUEST' ) && JSON_REQUEST ) ||
+	        ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ||
 			isset( $_POST['action'] )
 		)	{
 			$may_renew = false;
