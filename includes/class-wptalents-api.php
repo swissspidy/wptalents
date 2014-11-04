@@ -144,7 +144,7 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 			'byline'        => esc_html( get_post_meta( $post['ID'], 'byline', true ) ),
 			'job'           => (string) get_post_meta( $post['ID'], 'job', true ),
 			'wordpress_vip' => ( 1 == get_post_meta( $post['ID'], 'wordpress_vip', true ) ) ? true : false,
-			'location'      => $talent_meta['map']['name'],
+			'location'      => $talent_meta['map'],
 			'score'         => $talent_meta['score'],
 			'social'        => $talent_meta['social'],
 			'badges'        => $talent_meta['profile']['badges'],
