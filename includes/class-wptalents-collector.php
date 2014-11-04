@@ -525,7 +525,7 @@ class WP_Talents_Collector {
 				case 'facebook':
 					$social_links[ $field ] = array(
 						'name' => __( 'Facebook', 'wptalents' ),
-						'url'  => 'https://www.facebook.com/' . $meta,
+						'url'  => 'https://www.facebook.com/' . $value,
 					);
 					break;
 				case 'google-plus':
