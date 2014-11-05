@@ -122,7 +122,7 @@ class WP_Talents {
 	 *
 	 * @return    Plugin slug variable.
 	 */
-	public function get_plugin_slug() {
+	public static function get_plugin_slug() {
 		return self::$plugin_slug;
 	}
 
