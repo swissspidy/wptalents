@@ -259,10 +259,10 @@ class WP_Talents_Collector {
 				unset( $person_collector );
 			}
 
-			$team_score = $team_score / count( $people );
-
-			//$score = ( $team_score > $score ) ? $team_score : $score;
-			$score = ( $team_score + $score ) / 2;
+			if ( $people ) {
+				$team_score = $team_score / count( $people );
+				$score      = ( $team_score + $score ) / 2;
+			}
 		}
 
 		update_post_meta( $this->post->ID, '_score', absint( $score ) );
