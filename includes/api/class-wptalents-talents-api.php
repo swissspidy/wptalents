@@ -3,13 +3,7 @@
  * @package WP Talents
  */
 
-/**
- * Main WP Talents Class
- *
- * @package WP_Talents
- * @author  Pascal Birchler <pascal.birchler@spinpress.com>
- */
-class WP_Talents_API extends WP_JSON_CustomPostType {
+class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 
 	/**
 	 * Base route name.
@@ -31,11 +25,11 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 	 * @param WP_JSON_ResponseHandler $server
 	 */
 	public function __construct( WP_JSON_ResponseHandler $server ) {
-		parent::__construct( $server );
-	}
 
-	public function register_filters() {
 		add_filter( 'json_endpoints',  array( $this, 'register_routes' ) );
+
+		parent::__construct( $server );
+
 	}
 
 	/**
@@ -128,7 +122,7 @@ class WP_Talents_API extends WP_JSON_CustomPostType {
 		setup_postdata( $post_obj );
 
 		// Fetch our talent meta
-		$talent_meta = WP_Talents::get_talent_meta( $post_obj );
+		$talent_meta = WP_Talents_Helper::get_talent_meta( $post_obj );
 
 		// Prepare common post fields
 		$post_fields = array(
