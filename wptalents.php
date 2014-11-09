@@ -33,7 +33,6 @@ defined( 'ABSPATH' ) or die();
  */
 
 // Collectors
-require_once( WP_TALENTS_DIR . 'includes/class-wptalents-collector.php' );
 require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-data-collector.php' );
 require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-score-collector.php' );
 require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-theme-collector.php' );
@@ -47,7 +46,7 @@ require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-changeset-col
 require_once( WP_TALENTS_DIR . 'includes/class-wptalents-helper.php' );
 require_once( WP_TALENTS_DIR . 'includes/class-wptalents-router.php' );
 
-require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-type.php' );
+require_once( WP_TALENTS_DIR . 'includes/types/interface-wptalents-type.php' );
 require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-activity.php' );
 require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-product.php' );
 require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-company.php' );

@@ -77,9 +77,6 @@ class WP_Talents_Helper {
 			return false;
 		}
 
-		/** @var WP_Talents_Collector $collector */
-		$collector = new WP_Talents_Collector( $post );
-
 		switch ( $type ) {
 			case 'profile':
 				$collector = new WP_Talents_Profile_Collector( $post );
