@@ -35,11 +35,13 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 	 */
 	public function _retrieve_data() {
 
+		$talent_meta = WP_Talents_Helper::get_talent_meta( $this->post );
+
 		// Minimum value
 		$score = 1;
 
 		// Calculate plugins score
-		$plugins = (array) $this->get_plugins();
+		$plugins = (array) $talent_meta['plugins'];
 
 		// Store the download counts in this array
 		$total_downloads = array();
@@ -83,7 +85,7 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 		}
 
 		// Calculate themes score
-		$themes = (array) $this->get_themes();
+		$themes = (array) $talent_meta['themes'];
 
 		// Store the download counts in this array
 		$total_downloads = array();
@@ -115,7 +117,7 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 		}
 
 		// Calculate WordPress.org profile data score
-		$profile = $this->get_profile();
+		$profile = $talent_meta['profile'];
 
 		if ( is_array( $profile['badges'] ) ) {
 			// Loop through badges, adjust score depending on type
@@ -147,7 +149,7 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 		}
 
 		// Adjust score based on number of core contributions
-		$contributions = $this->get_contributions();
+		$contributions = $talent_meta['contributions'];
 		$contribution_types = array();
 
 		// Save number of contributions in this array
@@ -182,11 +184,11 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 		}
 
 		// Adjust score based on number of codex contributions
-		$codex_count = $this->get_codex_count();
+		$codex_count = $talent_meta['codex_count'];
 		$score += ( $codex_count / 20 < 20 ) ? $codex_count / 20 : 20;
 
 		// Adjust score based on number of props
-		$changeset_count = $this->get_changeset_count();
+		$changeset_count = $talent_meta['changeset_count'];
 		$score += ( $changeset_count / 20 < 20 ) ? $changeset_count / 20 : 20;
 
 		// Get median score for the company
@@ -207,8 +209,8 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 
 			/** @var WP_Post $person */
 			foreach ( $people as $person ) {
-				$person_collector = new self( $person->ID );
-				$team_score += $person_collector->get_score();
+				$person_collector = new self( $person );
+				$team_score += $person_collector->get_data();
 
 				unset( $person_collector );
 			}
