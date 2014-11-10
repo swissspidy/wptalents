@@ -145,9 +145,6 @@ class WP_Talents {
 	 * Registers our connections using Posts 2 Posts.
 	 *
 	 * @uses  p2p_register_connection_type()
-	 * @since 1.0.0
-	 *
-	 * @return void
 	 */
 	public static function register_connections() {
 
@@ -217,6 +214,7 @@ class WP_Talents {
 		foreach ( $this->types as $type ) {
 			add_filter( 'cmb_meta_boxes', array( $type, 'add_meta_boxes' ) );
 		}
+
 	}
 
 	public function add_cmb_field_types( array $cmb_field_types ) {
@@ -261,7 +259,7 @@ class WP_Talents {
 		}
 
 		if ( ! in_array( get_post_type( $post_id ), array_keys( $this->types ) ) ) {
-			;
+			return;
 		}
 
 		// Get the talent's location data

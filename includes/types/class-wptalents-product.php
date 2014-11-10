@@ -73,25 +73,27 @@ class WP_Talents_Product implements WP_Talents_Type {
 			),
 		);
 
-		$social_profiles = array( array(
-			'id'          => 'social',
-			'name'        => __( 'Social', 'wptalents' ),
-			'type'        => 'group',
-			'fields' => array(
-				array(
-					'id'   => 'url',
-					'name' => __( 'Website URL', 'wptalents' ),
-					'type' => 'text_url',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'crunchbase',
-					'name' => __( 'CrunchBase URL', 'wptalents' ),
-					'type' => 'text_url',
-					'cols' => 4
-				),
+		$social_profiles = array(
+			array(
+				'id'     => 'social',
+				'name'   => __( 'Social', 'wptalents' ),
+				'type'   => 'group',
+				'fields' => array(
+					array(
+						'id'   => 'url',
+						'name' => __( 'Website URL', 'wptalents' ),
+						'type' => 'text_url',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'crunchbase',
+						'name' => __( 'CrunchBase URL', 'wptalents' ),
+						'type' => 'text_url',
+						'cols' => 4
+					),
+				)
 			)
-		) );
+		);
 
 		$meta_boxes[] = array(
 			'title'    => __( 'Product Details', 'wptalents' ),

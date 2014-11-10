@@ -21,10 +21,10 @@
   "repositories": [
     {
       "type": "git",
-      "url" : "https://github.com/humanmade/Custom-Meta-Boxes"
+      "url" : "https://github.com/swissspidy/Custom-Meta-Boxes"
     }
   ],
   "require"     : {
-    "humanmade/custom-meta-boxes": "dev-master"
+    "humanmade/custom-meta-boxes": "dev-post-type-check"
   }
 }

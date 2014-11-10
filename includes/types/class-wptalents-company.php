@@ -154,55 +154,57 @@ class WP_Talents_Company implements WP_Talents_Type {
 			),
 		);
 
-		$social_profiles = array( array(
-			'id'          => 'social',
-			'name'        => __( 'Social', 'wptalents' ),
-			'type'        => 'group',
-			'fields' => array(
-				array(
-					'id'   => 'url',
-					'name' => __( 'Website URL', 'wptalents' ),
-					'type' => 'text_url',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'github',
-					'name' => __( 'Github Username', 'wptalents' ),
-					'type' => 'text',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'twitter',
-					'name' => __( 'Twitter Username', 'wptalents' ),
-					'type' => 'text',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'facebook',
-					'name' => __( 'Facebook (Vanity URL)', 'wptalents' ),
-					'type' => 'text',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'google-plus',
-					'name' => __( 'Google+ (ID)', 'wptalents' ),
-					'type' => 'text',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'linkedin',
-					'name' => __( 'LinkedIn URL', 'wptalents' ),
-					'type' => 'text_url',
-					'cols' => 4
-				),
-				array(
-					'id'   => 'crunchbase',
-					'name' => __( 'CrunchBase URL', 'wptalents' ),
-					'type' => 'text_url',
-					'cols' => 4
-				),
+		$social_profiles = array(
+			array(
+				'id'     => 'social',
+				'name'   => __( 'Social', 'wptalents' ),
+				'type'   => 'group',
+				'fields' => array(
+					array(
+						'id'   => 'url',
+						'name' => __( 'Website URL', 'wptalents' ),
+						'type' => 'text_url',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'github',
+						'name' => __( 'Github Username', 'wptalents' ),
+						'type' => 'text',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'twitter',
+						'name' => __( 'Twitter Username', 'wptalents' ),
+						'type' => 'text',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'facebook',
+						'name' => __( 'Facebook (Vanity URL)', 'wptalents' ),
+						'type' => 'text',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'google-plus',
+						'name' => __( 'Google+ (ID)', 'wptalents' ),
+						'type' => 'text',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'linkedin',
+						'name' => __( 'LinkedIn URL', 'wptalents' ),
+						'type' => 'text_url',
+						'cols' => 4
+					),
+					array(
+						'id'   => 'crunchbase',
+						'name' => __( 'CrunchBase URL', 'wptalents' ),
+						'type' => 'text_url',
+						'cols' => 4
+					),
+				)
 			)
-		) );
+		);
 
 		$location = array(
 			array(
