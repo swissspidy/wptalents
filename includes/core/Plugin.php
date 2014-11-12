@@ -1,6 +1,15 @@
 <?php
 
-class WP_Talents {
+namespace WPTalents\Core;
+
+use WPTalents\Types\Activity;
+use WPTalents\Types\Company;
+use WPTalents\Types\Person;
+use WPTalents\Types\Product;
+use WPTalents\API\Talents;
+use WPTalents\API\Products;
+
+class Plugin {
 
 	/* @var $types WP_Talents_Type[] */
 	protected $types = array();
@@ -20,7 +29,7 @@ class WP_Talents {
 	public function __construct() {
 
 		// Setup the router class
-		$this->router = new WP_Talents_Router();
+		$this->router = new Router();
 
 		add_action( 'init', array( $this, 'load_plugin_textdomain' ), 4 );
 
@@ -115,10 +124,10 @@ class WP_Talents {
 	public function add_types() {
 
 		$this->types = apply_filters( 'wptalents_types', array(
-			'person'   => new WP_Talents_Person(),
-			'company'  => new WP_Talents_Company(),
-			'activity' => new WP_Talents_Activity(),
-			'product'  => new WP_Talents_Product(),
+			'person'   => new Person(),
+			'company'  => new Company(),
+			'activity' => new Activity(),
+			'product'  => new Product(),
 		) );
 
 	}
@@ -219,9 +228,7 @@ class WP_Talents {
 
 	public function add_cmb_field_types( array $cmb_field_types ) {
 
-		require_once( WP_TALENTS_DIR . 'includes/class-wptalents-cmb-gmap-field.php' );
-
-		$cmb_field_types['gmap'] = 'WP_Talents_CMB_Gmap_Field';
+		$cmb_field_types['gmap'] = 'WPTalents\CMB\Gmap_Field';
 
 		return $cmb_field_types;
 
@@ -263,7 +270,7 @@ class WP_Talents {
 		}
 
 		// Get the talent's location data
-		$location = WP_Talents_Helper::get_talent_meta( get_the_ID(), 'location' );
+		$location = Helper::get_talent_meta( get_the_ID(), 'location' );
 
 		if ( empty( $location['name'] ) ) {
 			return;
@@ -418,11 +425,8 @@ class WP_Talents {
 	 */
 	public static function api_init( WP_JSON_ResponseHandler $server ) {
 
-		require_once WP_TALENTS_DIR . 'includes/api/class-wptalents-products-api.php';
-		require_once WP_TALENTS_DIR . 'includes/api/class-wptalents-talents-api.php';
-
-		new WP_Talents_Talents_API( $server );
-		new WP_Talents_Products_API( $server );
+		new Talents( $server );
+		new Products( $server );
 
 	}
 

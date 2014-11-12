@@ -1,6 +1,9 @@
 <?php
 
-class WP_Talents_Product implements WP_Talents_Type {
+namespace WPTalents\Types;
+use WPTalents\Core\Helper;
+
+class Product implements Type {
 
 	protected $post_type = 'product';
 
@@ -12,7 +15,7 @@ class WP_Talents_Product implements WP_Talents_Type {
 
 	public function filter_request( $query_vars ) {
 
-		if ( WP_Talents_Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
+		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
 			// Single Person
 
 			$query_vars['post_type'] = $this->post_type;
@@ -27,7 +30,7 @@ class WP_Talents_Product implements WP_Talents_Type {
 	public function register_post_type() {
 
 		$args = array(
-			'labels'        => WP_Talents_Helper::post_type_labels( 'Product' ),
+			'labels'        => Helper::post_type_labels( 'Product' ),
 			'public'        => true,
 			'show_ui'       => true,
 			'show_in_menu'  => true,
@@ -48,7 +51,7 @@ class WP_Talents_Product implements WP_Talents_Type {
 	public function register_taxonomy() {
 
 		$args = array(
-			'labels'                => WP_Talents_Helper::post_type_labels( 'Category', 'Categories' ),
+			'labels'                => Helper::post_type_labels( 'Category', 'Categories' ),
 			'hierarchical'          => true,
 			'show_ui'               => true,
 			'show_admin_column'     => true,

@@ -1,8 +1,10 @@
 <?php
 
-class WP_Talents_Contribution_Collector extends WP_Talents_Data_Collector {
+namespace WPTalents\Collector;
 
-	public function __construct( WP_Post $post ) {
+class Contribution_Collector extends Collector {
+
+	public function __construct( \WP_Post $post ) {
 
 		$this->expiration = 4 * WEEK_IN_SECONDS;
 

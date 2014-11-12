@@ -29,39 +29,15 @@ defined( 'ABSPATH' ) or die();
 ( ! defined( 'WP_TALENTS_URL' ) ) && define( 'WP_TALENTS_URL', plugins_url( '', __FILE__ ) );
 
 /**
- * General functionality
- */
-
-// Collectors
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-data-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-score-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-theme-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-plugin-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-profile-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-codex-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-contribution-collector.php' );
-require_once( WP_TALENTS_DIR . 'includes/collector/class-wptalents-changeset-collector.php' );
-
-// Helpers
-require_once( WP_TALENTS_DIR . 'includes/class-wptalents-helper.php' );
-require_once( WP_TALENTS_DIR . 'includes/class-wptalents-router.php' );
-
-require_once( WP_TALENTS_DIR . 'includes/types/interface-wptalents-type.php' );
-require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-activity.php' );
-require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-product.php' );
-require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-company.php' );
-require_once( WP_TALENTS_DIR . 'includes/types/class-wptalents-person.php' );
-
-require_once( WP_TALENTS_DIR . 'includes/class-wptalents.php' );
-
-/**
  * Register hooks that are fired when the plugin is activated or deactivated.
  * When the plugin is deleted, the uninstall.php file is loaded.
  */
 
+$loader = include_once( 'vendor/autoload.php' );
+
 function wptalents_activation() {
 
-	$wptalents = new WP_Talents();
+	$wptalents = new WPTalents\Core\Plugin();
 	$wptalents->activate();
 
 }
@@ -70,7 +46,7 @@ register_activation_hook( __FILE__, 'wptalents_activation' );
 
 function wptalents_deactivation() {
 
-	$wptalents = new WP_Talents();
+	$wptalents = new \WPTalents\Core\Plugin();
 	$wptalents->deactivate();
 
 }
@@ -82,7 +58,9 @@ register_deactivation_hook( __FILE__, 'wptalents_deactivation' );
  * Plugin Initialization
  */
 function wptalents_startup() {
-	return new WP_Talents();
+	require_once( 'public/template-tags.php');
+
+	new \WPTalents\Core\Plugin();
 }
 
 add_action( 'plugins_loaded', 'wptalents_startup' );

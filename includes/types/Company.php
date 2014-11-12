@@ -1,6 +1,9 @@
 <?php
 
-class WP_Talents_Company implements WP_Talents_Type {
+namespace WPTalents\Types;
+use WPTalents\Core\Helper;
+
+class Company implements Type {
 
 	protected $post_type = 'company';
 
@@ -18,7 +21,7 @@ class WP_Talents_Company implements WP_Talents_Type {
 
 	public function filter_request( $query_vars ) {
 
-		if ( WP_Talents_Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
+		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
 			// Single Person
 
 			$query_vars['post_type'] = $this->post_type;
@@ -69,7 +72,7 @@ class WP_Talents_Company implements WP_Talents_Type {
 	public function register_post_type() {
 
 		$args = array(
-			'labels'        => WP_Talents_Helper::post_type_labels( 'Company', 'Companies' ),
+			'labels'        => Helper::post_type_labels( 'Company', 'Companies' ),
 			'public'        => true,
 			'show_ui'       => true,
 			'show_in_menu'  => true,
@@ -94,7 +97,7 @@ class WP_Talents_Company implements WP_Talents_Type {
 		} else {
 
 			$region_args = array(
-				'labels'                => WP_Talents_Helper::post_type_labels( 'Region', 'Regions' ),
+				'labels'                => Helper::post_type_labels( 'Region', 'Regions' ),
 				'hierarchical'          => true,
 				'show_ui'               => true,
 				'show_admin_column'     => true,
@@ -115,7 +118,7 @@ class WP_Talents_Company implements WP_Talents_Type {
 		} else {
 
 			$region_args = array(
-				'labels'                => WP_Talents_Helper::post_type_labels( 'Service' ),
+				'labels'                => Helper::post_type_labels( 'Service' ),
 				'hierarchical'          => true,
 				'show_ui'               => true,
 				'show_admin_column'     => true,

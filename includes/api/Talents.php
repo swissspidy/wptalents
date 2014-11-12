@@ -3,6 +3,8 @@
  * @package WP Talents
  */
 
+namespace WPTalents\API;
+
 class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 
 	/**

@@ -1,6 +1,8 @@
 <?php
 
-abstract class WP_Talents_Data_Collector {
+namespace WPTalents\Collector;
+
+abstract class Collector {
 
 	/** @var  int $expiration */
 	protected $expiration = WEEK_IN_SECONDS;
@@ -14,9 +16,9 @@ abstract class WP_Talents_Data_Collector {
 	/**
 	 * Initialize the collector.
 	 *
-	 * @param WP_Post $post
+	 * @param \WP_Post $post
 	 */
-	public function __construct( WP_Post $post ) {
+	public function __construct( \WP_Post $post ) {
 
 		$this->post = $post;
 

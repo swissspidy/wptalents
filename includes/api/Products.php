@@ -3,7 +3,9 @@
  * @package WP Talents
  */
 
-class WP_Talents_Products_API extends WP_JSON_CustomPostType {
+namespace WPTalents\API;
+
+class Products extends WP_JSON_CustomPostType {
 
 	/**
 	 * Base route name.

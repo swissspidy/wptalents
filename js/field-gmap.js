@@ -83,11 +83,11 @@
   }
 
   CMB.addCallbackForInit( function() {
-    $('.WP_Talents_CMB_Gmap_Field .field-item').each(function() {
+    $('.WPTalentsCMBGmap_Field .field-item').each(function() {
       CMBGmapsInit( $(this) );
     });
   } );
 
-  CMB.addCallbackForClonedField( ['WP_Talents_CMB_Gmap_Field'], CMBGmapsInit );
+  CMB.addCallbackForClonedField( ['WPTalentsCMBGmap_Field'], CMBGmapsInit );
 
 }(jQuery));

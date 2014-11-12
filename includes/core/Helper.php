@@ -1,6 +1,16 @@
 <?php
 
-class WP_Talents_Helper {
+namespace WPTalents\Core;
+
+use WPTalents\Collector\Changeset_Collector;
+use WPTalents\Collector\Codex_Collector;
+use WPTalents\Collector\Contribution_Collector;
+use WPTalents\Collector\Plugin_Collector;
+use WPTalents\Collector\Profile_Collector;
+use WPTalents\Collector\Score_Collector;
+use WPTalents\Collector\Theme_Collector;
+
+class Helper {
 
 	public static function post_type_labels( $singular, $plural = '' ) {
 
@@ -79,27 +89,27 @@ class WP_Talents_Helper {
 
 		switch ( $type ) {
 			case 'profile':
-				$collector = new WP_Talents_Profile_Collector( $post );
+				$collector = new Profile_Collector( $post );
 
 				return $collector->get_data();
 				break;
 			case 'badges':
-				$collector = new WP_Talents_Profile_Collector( $post );
+				$collector = new Profile_Collector( $post );
 
 				return $collector->get_data()['badges'];
 				break;
 			case 'plugins':
-				$collector = new WP_Talents_Plugin_Collector( $post );
+				$collector = new Plugin_Collector( $post );
 
 				return $collector->get_data();
 				break;
 			case 'themes':
-				$collector = new WP_Talents_Theme_Collector( $post );
+				$collector = new Theme_Collector( $post );
 
 				return $collector->get_data();
 				break;
 			case 'score':
-				$collector = new WP_Talents_Score_Collector( $post );
+				$collector = new Score_Collector( $post );
 
 				return $collector->get_data();
 				break;
@@ -132,13 +142,13 @@ class WP_Talents_Helper {
 			default:
 				// Return all meta
 
-				$theme_collector        = new WP_Talents_Theme_Collector( $post );
-				$plugin_collector       = new WP_Talents_Plugin_Collector( $post );
-				$profile_collector      = new WP_Talents_Profile_Collector( $post );
-				$contribution_collector = new WP_Talents_Contribution_Collector( $post );
-				$codex_collector        = new WP_Talents_Codex_Collector( $post );
-				$changeset_collector    = new WP_Talents_Changeset_Collector( $post );
-				$score_collector        = new WP_Talents_Score_Collector( $post );
+				$theme_collector        = new Theme_Collector( $post );
+				$plugin_collector       = new Plugin_Collector( $post );
+				$profile_collector      = new Profile_Collector( $post );
+				$contribution_collector = new Contribution_Collector( $post );
+				$codex_collector        = new Codex_Collector( $post );
+				$changeset_collector    = new Changeset_Collector( $post );
+				$score_collector        = new Score_Collector( $post );
 
 				return array(
 					'score'           => $score_collector->get_data(),
@@ -160,7 +170,7 @@ class WP_Talents_Helper {
 	/**
 	 * Get the avatar of a talent.
 	 *
-	 * @param WP_Post|int $post The post object or ID.
+	 * @param \WP_Post|int $post The post object or ID.
 	 *
 	 * @return mixed            The avatar URL on success,
 	 *                          false if the post does not exist.
@@ -174,7 +184,7 @@ class WP_Talents_Helper {
 		}
 
 		// Add size parameter
-		$avatar = add_query_arg( array( 's' => $size ), $profile['avatar'] );
+		$avatar = add_query_arg( array( 's' => $size, 'd' => 'mm' ), $profile['avatar'] );
 
 		return sprintf(
 			'<img src="%1$s" alt="%2$s" width="%3$d" height="%3$d" />',
@@ -186,11 +196,11 @@ class WP_Talents_Helper {
 	}
 
 	/**
-	 * @param WP_Post $post
+	 * @param \WP_Post $post
 	 *
 	 * @return array
 	 */
-	public static function get_social_links( WP_Post $post ) {
+	public static function get_social_links( \WP_Post $post ) {
 
 		$social_links = array();
 
@@ -262,11 +272,11 @@ class WP_Talents_Helper {
 	 * If it's a company, it returns the locations of all
 	 * team members so we can show one big map.
 	 *
-	 * @param WP_Post The post object.
+	 * @param \WP_Post The post object.
 	 *
 	 * @return array Location data as an array
 	 */
-	public static function get_map_data( WP_Post $post ) {
+	public static function get_map_data( \WP_Post $post ) {
 
 		$all_locations = array();
 
@@ -293,7 +303,7 @@ class WP_Talents_Helper {
 				'suppress_filters' => false
 			) );
 
-			/** @var WP_Post $person */
+			/** @var \WP_Post $person */
 			foreach ( $people as $person ) {
 
 				if ( ! $person_location = self::get_map_data( $person ) ) {

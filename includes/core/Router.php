@@ -1,12 +1,8 @@
 <?php
 
-/**
- * Created by PhpStorm.
- * User: Pascal
- * Date: 06.11.14
- * Time: 22:02
- */
-class WP_Talents_Router {
+namespace WPTalents\Core;
+
+class Router {
 
 	public function __construct() {
 

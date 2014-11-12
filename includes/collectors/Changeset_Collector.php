@@ -1,50 +1,8 @@
 <?php
 
-class WP_Talents_Changeset_Collector {
+namespace WPTalents\Collector;
 
-	/** @var  int $expiration */
-	protected $expiration = WEEK_IN_SECONDS;
-
-	/** @var WP_Post $post */
-	protected $post;
-
-	/**
-	 * Initialize the collector.
-	 *
-	 * @since 0.0.1
-	 *
-	 * @param WP_Post|int $post
-	 * @param array       $args
-	 */
-	public function __construct( $post, $args = array() ) {
-
-		if ( ! is_a( $this->post = get_post( $post ), 'WP_Post' ) ) {
-			return false;
-		}
-
-		$may_renew = true;
-
-		if (
-			( defined( 'JSON_REQUEST' ) && JSON_REQUEST ) ||
-	        ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ||
-			! is_singular() ||
-			isset( $_POST['action'] )
-		)	{
-			$may_renew = false;
-		}
-
-		$defaults = array(
-			'username' => get_post_meta( $this->post->ID, 'wordpress-username', true ),
-			'may_renew'  => $may_renew
-		);
-
-		$this->options = apply_filters( 'wptalents_data_collector_options', wp_parse_args( $args, $defaults ), $post );
-
-		if ( empty( $this->options['username'] ) ) {
-			return false;
-		}
-
-	}
+class Changeset_Collector extends Collector {
 
 	/**
 	 * @access public

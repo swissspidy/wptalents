@@ -1,6 +1,9 @@
 <?php
 
-class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
+namespace WPTalents\Collector;
+use WPTalents\Core\Helper;
+
+class Score_Collector extends Collector {
 
 	/**
 	 * @access public
@@ -35,7 +38,7 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 	 */
 	public function _retrieve_data() {
 
-		$talent_meta = WP_Talents_Helper::get_talent_meta( $this->post );
+		$talent_meta = Helper::get_talent_meta( $this->post );
 
 		// Minimum value
 		$score = 1;
@@ -47,12 +50,12 @@ class WP_Talents_Score_Collector extends WP_Talents_Data_Collector {
 		$total_downloads = array();
 
 		// Set today's date
-		$now = new DateTime( 'now' );
+		$now = new \DateTime( 'now' );
 
 		// Loop through plugins
 		foreach ( $plugins as $plugin ) {
 			// Check when the plugin was last updated
-			$plugin_updated = new DateTime( $plugin->last_updated );
+			$plugin_updated = new \DateTime( $plugin->last_updated );
 			$date_diff      = $now->diff( $plugin_updated );
 
 			// Don't take into account plugins that haven't been updated for 2+ years

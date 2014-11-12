@@ -1,9 +1,12 @@
 <?php
 /**
  * @package WP_Talents
+ * @subpackge CMB
  */
 
-if ( ! class_exists( 'CMB_Gmap_Field' ) ) {
+namespace WPTalents\CMB;
+
+if ( ! class_exists( '\CMB_Gmap_Field' ) ) {
 	return;
 }
 
@@ -15,7 +18,7 @@ if ( ! class_exists( 'CMB_Gmap_Field' ) ) {
  * @see CMB_Gmap_Field
  *
  */
-class WP_Talents_CMB_Gmap_Field extends CMB_Gmap_Field {
+class Gmap_Field extends \CMB_Gmap_Field {
 	/**
 	 * Return the default args for the Map field.
 	 *

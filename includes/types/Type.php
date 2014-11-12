@@ -1,6 +1,8 @@
 <?php
 
-interface WP_Talents_Type {
+namespace WPTalents\Types;
+
+interface Type {
 
 	public function register_post_type();
 

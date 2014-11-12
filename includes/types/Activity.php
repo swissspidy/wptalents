@@ -1,12 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Pascal
- * Date: 06.11.14
- * Time: 21:57
- */
 
-class WP_Talents_Activity implements WP_Talents_Type {
+namespace WPTalents\Types;
+use WPTalents\Core\Helper;
+
+class Activity implements Type {
 
 	protected $post_type = 'activity';
 
@@ -15,7 +12,7 @@ class WP_Talents_Activity implements WP_Talents_Type {
 	public function register_post_type() {
 
 		$args = array(
-			'labels'        => WP_Talents_Helper::post_type_labels( 'Activity', 'Activities' ),
+			'labels'        => Helper::post_type_labels( 'Activity', 'Activities' ),
 			'public'        => true,
 			'show_ui'       => true,
 			'show_in_menu'  => true,

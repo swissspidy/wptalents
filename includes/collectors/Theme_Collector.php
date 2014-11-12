@@ -1,6 +1,8 @@
 <?php
 
-class WP_Talents_Theme_Collector extends WP_Talents_Data_Collector {
+namespace WPTalents\Collector;
+
+class Theme_Collector extends Collector {
 
 	/**
 	 * @access public
