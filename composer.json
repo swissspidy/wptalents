@@ -24,7 +24,9 @@
       "url" : "https://github.com/swissspidy/Custom-Meta-Boxes"
     }
   ],
-  "require"     : {},
+  "require"     : {
+    "humanmade/custom-meta-boxes": "dev-post-type-check"
+  },
   "autoload"    : {
     "psr-4": {
       "WPTalents\\API\\"      : "includes/api",
