@@ -99,20 +99,6 @@ class Job implements Type {
 	 */
 	public function filter_post_class( array $classes ) {
 
-		/** @var WP_Post $post */
-		global $post;
-
-		if ( $this->post_type !== $post->post_type ) {
-			return $classes;
-		}
-
-		// Add default classes
-		$classes[] = 'talent';
-
-		if ( $post !== get_queried_object() ) {
-			$classes[] = 'talent--small';
-		}
-
 		return $classes;
 
 	}
