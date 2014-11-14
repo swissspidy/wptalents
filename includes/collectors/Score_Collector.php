@@ -50,18 +50,10 @@ class Score_Collector extends Collector {
 		$score = 1;
 
 		// Calculate plugins score
-		$plugins = (array) $talent_meta['plugins'];
-
-		if ( $plugins ) {
-			$score += $this->_calculate_plugin_score( $plugins );
-		}
+		$score += $this->_calculate_plugin_score( $talent_meta['plugins'] );
 
 		// Calculate themes score
-		$themes = (array) $talent_meta['themes'];
-
-		if ( $themes ) {
-			$score += $this->_calculate_theme_score( $themes );
-		}
+		$score += $this->_calculate_theme_score( $talent_meta['themes'] );
 
 		// Calculate WordPress.org profile data score
 		$score += $this->_calculate_badge_score( $talent_meta['profile']['badges'] );
