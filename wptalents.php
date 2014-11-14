@@ -33,8 +33,6 @@ defined( 'ABSPATH' ) or die();
  * When the plugin is deleted, the uninstall.php file is loaded.
  */
 
-$loader = include_once( 'vendor/autoload.php' );
-
 function wptalents_activation() {
 
 	$wptalents = new WPTalents\Core\Plugin();

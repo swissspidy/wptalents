@@ -5,10 +5,13 @@ namespace WPTalents\Core;
 use WPTalents\Collector\Changeset_Collector;
 use WPTalents\Collector\Codex_Collector;
 use WPTalents\Collector\Contribution_Collector;
+use WPTalents\Collector\Forums_Collector;
 use WPTalents\Collector\Plugin_Collector;
 use WPTalents\Collector\Profile_Collector;
 use WPTalents\Collector\Score_Collector;
 use WPTalents\Collector\Theme_Collector;
+use \WP_Post;
+use WPTalents\Collector\WordPressTv_Collector;
 
 class Helper {
 
@@ -67,8 +70,8 @@ class Helper {
 	}
 
 	/**
-	 * @param WP_Post|int $post The post object or ID.
-	 * @param string      $type The meta to retrieve. Defaults to all.
+	 * @param WP_Post $post     The post object or ID.
+	 * @param string  $type     The meta to retrieve. Defaults to all.
 	 *                          Possible values are:
 	 *                          - profile
 	 *                          - plugins
@@ -77,15 +80,7 @@ class Helper {
 	 * @return mixed            The required meta if available,
 	 *                          false if the post does not exist.
 	 */
-	public static function get_talent_meta( $post = null, $type = 'all' ) {
-
-		if ( null === $post ) {
-			$post = get_queried_object();
-		}
-
-		if ( ! is_object( $post = get_post( $post ) ) ) {
-			return false;
-		}
+	public static function get_talent_meta( WP_Post $post, $type = 'all' ) {
 
 		switch ( $type ) {
 			case 'profile':
@@ -110,6 +105,16 @@ class Helper {
 				break;
 			case 'score':
 				$collector = new Score_Collector( $post );
+
+				return $collector->get_data();
+				break;
+			case 'forums':
+				$collector = new Forums_Collector( $post );
+
+				return $collector->get_data();
+				break;
+			case 'wordpresstv':
+				$collector = new WordPressTv_Collector( $post );
 
 				return $collector->get_data();
 				break;
@@ -149,6 +154,8 @@ class Helper {
 				$codex_collector        = new Codex_Collector( $post );
 				$changeset_collector    = new Changeset_Collector( $post );
 				$score_collector        = new Score_Collector( $post );
+				$forums_collector       = new Forums_Collector( $post );
+				$wordpresstv_collector  = new WordPressTv_Collector( $post );
 
 				return array(
 					'score'           => $score_collector->get_data(),
@@ -161,6 +168,8 @@ class Helper {
 					'contributions'   => $contribution_collector->get_data(),
 					'codex_count'     => $codex_collector->get_data(),
 					'changeset_count' => $changeset_collector->get_data(),
+					'forums'          => $forums_collector->get_data(),
+					'wordpresstv'     => $wordpresstv_collector->get_data()
 				);
 				break;
 
@@ -175,7 +184,7 @@ class Helper {
 	 * @return mixed            The avatar URL on success,
 	 *                          false if the post does not exist.
 	 */
-	public static function get_avatar( $post = null, $size = 144 ) {
+	public static function get_avatar( WP_Post $post, $size = 144 ) {
 
 		$profile = self::get_talent_meta( $post, 'profile' );
 
@@ -200,7 +209,7 @@ class Helper {
 	 *
 	 * @return array
 	 */
-	public static function get_social_links( \WP_Post $post ) {
+	public static function get_social_links( WP_Post $post ) {
 
 		$social_links = array();
 
@@ -272,15 +281,15 @@ class Helper {
 	 * If it's a company, it returns the locations of all
 	 * team members so we can show one big map.
 	 *
-	 * @param \WP_Post The post object.
+	 * @param WP_Post The post object.
 	 *
 	 * @return array Location data as an array
 	 */
-	public static function get_map_data( \WP_Post $post ) {
+	public static function get_map_data( WP_Post $post ) {
 
 		$all_locations = array();
 
-		$location = self::get_talent_meta( $post->ID, 'location' );
+		$location = self::get_talent_meta( $post, 'location' );
 
 		if ( empty( $location['lat'] ) || empty( $location['long'] ) ) {
 			return false;

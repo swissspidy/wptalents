@@ -4,6 +4,7 @@ namespace WPTalents\Core;
 
 use WPTalents\Types\Activity;
 use WPTalents\Types\Company;
+use WPTalents\Types\Job;
 use WPTalents\Types\Person;
 use WPTalents\Types\Product;
 use WPTalents\API\Talents;
@@ -128,6 +129,7 @@ class Plugin {
 			'company'  => new Company(),
 			'activity' => new Activity(),
 			'product'  => new Product(),
+			'job'      => new Job(),
 		) );
 
 	}
@@ -215,6 +217,21 @@ class Plugin {
 			'from_query_vars' => array( 'post_status' => 'any' ),
 		) );
 
+		p2p_register_connection_type( array(
+			'name'            => 'hiring',
+			'from'            => 'company',
+			'to'              => 'job',
+			'cardinality'     => 'one-to-many',
+			'title'           => __( 'Open Jobs', 'wptalents' ),
+			'admin_box'       => array(
+				'show'    => 'from',
+				'context' => 'side'
+			),
+			'can_create_post' => false,
+			'to_query_vars'   => array( 'post_status' => 'any' ),
+			'from_query_vars' => array( 'post_status' => 'any' ),
+		) );
+
 	}
 
 	public function add_meta_boxes() {
@@ -270,7 +287,7 @@ class Plugin {
 		}
 
 		// Get the talent's location data
-		$location = Helper::get_talent_meta( get_the_ID(), 'location' );
+		$location = Helper::get_talent_meta( get_post( $post_id ), 'location' );
 
 		if ( empty( $location['name'] ) ) {
 			return;

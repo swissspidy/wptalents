@@ -1,7 +1,9 @@
 <?php
 
 namespace WPTalents\Collector;
+
 use WPTalents\Core\Helper;
+use \DateTime;
 
 class Score_Collector extends Collector {
 
@@ -46,16 +48,74 @@ class Score_Collector extends Collector {
 		// Calculate plugins score
 		$plugins = (array) $talent_meta['plugins'];
 
+		if ( $plugins ) {
+			$score += $this->_calculate_plugin_score( $plugins );
+		}
+
+		// Calculate themes score
+		$themes = (array) $talent_meta['themes'];
+
+		if ( $themes ) {
+			$score += $this->_calculate_theme_score( $themes );
+		}
+
+		// Calculate WordPress.org profile data score
+		if ( $badges = $talent_meta['profile']['badges'] ) {
+			$score += $this->_calculate_badge_score( $badges );
+		}
+
+		// Adjust score based on number of core contributions
+		if ( $contributions = $talent_meta['contributions'] ) {
+			$score += $this->_calculate_contribution_score(
+				$contributions,
+				$talent_meta['codex_count'],
+				$talent_meta['contribution_count']
+			);
+		}
+
+		// Adjust score based on number of WordPress.tv videos
+		if ( $videos = $talent_meta['wordpresstv'] ) {
+			$score += $this->_calculate_wordpresstv_score( $videos );
+		}
+
+		if ( $forums = $talent_meta['forums'] ) {
+			$score += $this->_calculate_forums_score( $forums );
+		}
+
+		// Get median score for the company
+		if ( 'company' === get_post_type( $this->post ) ) {
+
+			if ( 1 == get_post_meta( $this->post->ID, 'wordpress_vip' ) ) {
+				$score += 10;
+			}
+
+			if ( $team_score = $this->_calculate_team_score() ) {
+				$score = ( $this->_calculate_team_score() + $score ) / 2;
+			}
+
+		}
+
+		update_post_meta( $this->post->ID, '_score', absint( $score ) );
+		update_post_meta( $this->post->ID, '_score_expiration', time() + $this->expiration );
+
+		return $score;
+
+	}
+
+	public function _calculate_plugin_score( $plugins ) {
+
+		$score = 0;
+
 		// Store the download counts in this array
 		$total_downloads = array();
 
 		// Set today's date
-		$now = new \DateTime( 'now' );
+		$now = new DateTime( 'now' );
 
 		// Loop through plugins
 		foreach ( $plugins as $plugin ) {
 			// Check when the plugin was last updated
-			$plugin_updated = new \DateTime( $plugin->last_updated );
+			$plugin_updated = new DateTime( $plugin->last_updated );
 			$date_diff      = $now->diff( $plugin_updated );
 
 			// Don't take into account plugins that haven't been updated for 2+ years
@@ -72,7 +132,7 @@ class Score_Collector extends Collector {
 
 		// Check the average downloads count using the median value
 		sort( $total_downloads, SORT_NUMERIC );
-		$avg_downloads = $total_downloads[ round( ( count( $total_downloads ) ) / 2 ) - 1 ];
+		$avg_downloads = $total_downloads[ (int) round( ( count( $total_downloads ) ) / 2 ) - 1 ];
 
 		// Adjust score based on average downloads
 		if ( $avg_downloads > 100000 ) {
@@ -87,8 +147,13 @@ class Score_Collector extends Collector {
 			$score += 1;
 		}
 
-		// Calculate themes score
-		$themes = (array) $talent_meta['themes'];
+		return $score;
+
+	}
+
+	public function _calculate_theme_score( $themes ) {
+
+		$score = 0;
 
 		// Store the download counts in this array
 		$total_downloads = array();
@@ -119,49 +184,61 @@ class Score_Collector extends Collector {
 			$score += 1;
 		}
 
-		// Calculate WordPress.org profile data score
-		$profile = $talent_meta['profile'];
+		return $score;
 
-		if ( is_array( $profile['badges'] ) ) {
-			// Loop through badges, adjust score depending on type
-			foreach ( $profile['badges'] as $badge ) {
-				switch ( $badge ) {
-					case 'Core Team':
-						$score += 50;
-						break;
-					case 'Plugin Developer':
-						$score += 15;
-						break;
-					case 'Theme Developer':
-						$score += 7;
-						break;
-					case 'Theme Review Team':
-						$score += 3;
-						break;
-					case 'Community Team':
-						$score += 5;
-						break;
-					case 'WordCamp Speaker':
-						$score += 10;
-						break;
-					default:
-						$score += 2;
-						break;
-				}
+	}
+
+	public function _calculate_badge_score( $badges ) {
+
+		$score = 0;
+
+		// Loop through badges, adjust score depending on type
+		foreach ( $badges as $badge ) {
+			switch ( $badge ) {
+				case 'Core Team':
+					$score += 50;
+					break;
+				case 'Meta Team':
+					$score += 25;
+					break;
+				case 'Plugin Developer':
+					$score += 15;
+					break;
+				case 'Theme Developer':
+					$score += 15;
+					break;
+				case 'Community Team':
+					$score += 10;
+					break;
+				case 'WordCamp Speaker':
+					$score += 10;
+					break;
+				case 'Theme Review Team':
+					$score += 5;
+					break;
+				default:
+					$score += 2;
+					break;
 			}
 		}
 
-		// Adjust score based on number of core contributions
-		$contributions = $talent_meta['contributions'];
+		return $score;
+
+	}
+
+	public function _calculate_contribution_score( $contributions, $codex_count = 0, $changeset_count = 0 ) {
+
+		$score = 0;
+
 		$contribution_types = array();
 
 		// Save number of contributions in this array
-		foreach( $contributions as $contribution ) {
-			$contribution_types[$contribution]++;
+		foreach ( $contributions as $contribution ) {
+			$contribution_types[ $contribution ] ++;
 		}
 
 		// Depending on role the score will be higher or lower
-		foreach( $contribution_types as $type => $count ) {
+		foreach ( $contribution_types as $type => $count ) {
 			switch ( $type ) {
 				case 'Core Contributor':
 					$factor = 2;
@@ -187,45 +264,88 @@ class Score_Collector extends Collector {
 		}
 
 		// Adjust score based on number of codex contributions
-		$codex_count = $talent_meta['codex_count'];
 		$score += ( $codex_count / 20 < 20 ) ? $codex_count / 20 : 20;
 
 		// Adjust score based on number of props
-		$changeset_count = $talent_meta['changeset_count'];
 		$score += ( $changeset_count / 20 < 20 ) ? $changeset_count / 20 : 20;
 
-		// Get median score for the company
-		if ( 'company' === get_post_type( $this->post ) ) {
-			$team_score = 0;
+		return $score;
 
-			if ( 1 == get_post_meta( $this->post->ID, 'wordpress_vip' ) ) {
-				$team_score += 10;
-			}
+	}
 
-			// Find connected posts
-			$people = get_posts( array(
-				'connected_type'   => 'team',
-				'connected_items'  => $this->post,
-				'nopaging'         => true,
-				'suppress_filters' => false
-			) );
+	public function _calculate_team_score() {
 
-			/** @var WP_Post $person */
-			foreach ( $people as $person ) {
-				$person_collector = new self( $person );
-				$team_score += $person_collector->get_data();
+		$score = 0;
 
-				unset( $person_collector );
-			}
+		// Find connected posts
+		$people = get_posts( array(
+			'connected_type'   => 'team',
+			'connected_items'  => $this->post,
+			'nopaging'         => true,
+			'suppress_filters' => false
+		) );
 
-			if ( $people ) {
-				$team_score = $team_score / count( $people );
-				$score      = ( $team_score + $score ) / 2;
-			}
+		/** @var WP_Post $person */
+		foreach ( $people as $person ) {
+			$person_collector = new self( $person );
+			$score += $person_collector->get_data();
+
+			unset( $person_collector );
 		}
 
-		update_post_meta( $this->post->ID, '_score', absint( $score ) );
-		update_post_meta( $this->post->ID, '_score_expiration', time() + $this->expiration );
+		if ( $people ) {
+			return $score / count( $people );
+		}
+
+		return false;
+
+	}
+
+	public function _calculate_wordpresstv_score( $videos ) {
+
+		$score = 0;
+
+		$videos = count( $videos );
+
+		// Adjust score based on average downloads
+		if ( $videos > 20 ) {
+			$score += 20;
+		} else if ( $videos > 15 ) {
+			$score += 15;
+		} else if ( $videos > 10 ) {
+			$score += 9;
+		} else if ( $videos > 3 ) {
+			$score += 3;
+		} else {
+			$score += 1;
+		}
+
+		return $score;
+
+	}
+
+	public function _calculate_forums_score( $forums ) {
+
+		$score = 0;
+
+		$total_replies = $forums['total_replies'];
+		$threads       = count( $forums['threads'] );
+
+		if ( $total_replies >= 1000 ) {
+			$score = 50;
+		} else if ( $total_replies > 750 ) {
+			$score = 37.5;
+		} else if ( $total_replies >= 490 ) {
+			$score = 25;
+		} else if ( $total_replies >= 90 ) {
+			$score = 10;
+		} else if ( $total_replies > 10 ) {
+			$score = 2;
+		}
+
+		if ( $threads > 5 ) {
+			$score += 5;
+		}
 
 		return $score;
 

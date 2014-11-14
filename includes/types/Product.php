@@ -16,7 +16,7 @@ class Product implements Type {
 	public function filter_request( $query_vars ) {
 
 		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
-			// Single Person
+			// Single Product
 
 			$query_vars['post_type'] = $this->post_type;
 			$query_vars['name']      = $query_vars['talent'];
