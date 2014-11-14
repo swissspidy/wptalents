@@ -1,6 +1,7 @@
 <?php
 
 namespace WPTalents\Collector;
+use \WP_Post;
 
 abstract class Collector {
 
@@ -16,9 +17,9 @@ abstract class Collector {
 	/**
 	 * Initialize the collector.
 	 *
-	 * @param \WP_Post $post
+	 * @param WP_Post $post
 	 */
-	public function __construct( \WP_Post $post ) {
+	public function __construct( WP_Post $post ) {
 
 		$this->post = $post;
 

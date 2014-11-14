@@ -3,6 +3,7 @@
 namespace WPTalents\Types;
 
 use WPTalents\Core\Helper;
+use \WP_Post;
 
 class Person implements Type {
 
@@ -270,6 +271,10 @@ class Person implements Type {
 
 		/** @var WP_Post $post */
 		global $post;
+
+		if ( ! is_a( $post, 'WP_Post' ) ) {
+			return $classes;
+		}
 
 		if ( $this->post_type === $post->post_type ) {
 			// Add default classes

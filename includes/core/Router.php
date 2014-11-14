@@ -61,7 +61,7 @@ class Router {
 		// Query vars haven't been modified
 		if ( $query_vars === $original_query_vars ) {
 
-			if ( WP_Talents_Helper::post_exists( $query_vars['talent'], 'page' ) ) {
+			if ( Helper::post_exists( $query_vars['talent'], 'page' ) ) {
 
 				// Page
 

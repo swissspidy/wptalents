@@ -12,7 +12,7 @@ use WPTalents\Core\Helper;
  *                          false if the post does not exist.
  */
 function wptalents_get_avatar( $post = null, $size = 144 ) {
-	return Helper::get_avatar( $post, $size );
+	return Helper::get_avatar( get_post( $post ), $size );
 }
 
 function wptalents_get_attachment_url( $attachment, $size = 'full' ) {
@@ -31,5 +31,5 @@ function wptalents_get_attachment_url( $attachment, $size = 'full' ) {
  *                          false if the post does not exist.
  */
 function wptalents_get_talent_meta( $post = null, $type = 'all' ) {
-	return Helper::get_talent_meta( $post, $type );
+	return Helper::get_talent_meta( get_post( $post ), $type );
 }
