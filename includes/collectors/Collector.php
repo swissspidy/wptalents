@@ -3,6 +3,10 @@
 namespace WPTalents\Collector;
 use \WP_Post;
 
+/**
+ * Class Collector
+ * @package WPTalents\Collector
+ */
 abstract class Collector {
 
 	/** @var  int $expiration */
@@ -36,7 +40,7 @@ abstract class Collector {
 
 		$this->options = array(
 			'username' => get_post_meta( $post->ID, 'wordpress-username', true ),
-			'may_renew'  => $may_renew
+			'may_renew'  => $may_renew,
 		);
 
 		$this->options = apply_filters( 'wptalents_data_collector_options', $this->options, $post );

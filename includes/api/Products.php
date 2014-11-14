@@ -4,7 +4,15 @@
  */
 
 namespace WPTalents\API;
+use \WP_Error;
+use \WP_JSON_Server;
+use \WP_JSON_CustomPostType;
+use \WP_JSON_ResponseHandler;
 
+/**
+ * Class Products
+ * @package WPTalents\API
+ */
 class Products extends WP_JSON_CustomPostType {
 
 	/**
@@ -41,17 +49,27 @@ class Products extends WP_JSON_CustomPostType {
 	 * @return array Modified routes
 	 */
 	public function register_routes( $routes ) {
-		$routes[$this->base] = array(
-			array( array( $this, 'get_posts'), WP_JSON_Server::READABLE ),
+
+		$routes[ $this->base ] = array(
+			array( array( $this, 'get_posts' ), WP_JSON_Server::READABLE ),
 		);
 
-		$routes[$this->base . '/(?P<id>\d+)'] = array(
-			array( array( $this, 'get_post'), WP_JSON_Server::READABLE ),
+		$routes[ $this->base . '/(?P<id>\d+)' ] = array(
+			array( array( $this, 'get_post' ), WP_JSON_Server::READABLE ),
 		);
 
 		return $routes;
+
 	}
 
+	/**
+	 * @param array  $filter
+	 * @param string $context
+	 * @param null   $type
+	 * @param int    $page
+	 *
+	 * @return WP_Error|array
+	 */
 	public function get_posts( $filter = array(), $context = 'view', $type = null, $page = 1 ) {
 		if ( ! empty( $type ) && $type !== $this->type ) {
 			return new WP_Error( 'json_post_invalid_type', __( 'Invalid post type' ), array( 'status' => 400 ) );

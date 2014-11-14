@@ -2,6 +2,10 @@
 
 namespace WPTalents\Collector;
 
+/**
+ * Class Codex_Collector
+ * @package WPTalents\Collector
+ */
 class Codex_Collector extends Collector {
 
 	/**
@@ -13,8 +17,8 @@ class Codex_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_codex_count', true );
 
 		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
+			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+			&& $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -40,30 +44,28 @@ class Codex_Collector extends Collector {
 				'list'    => 'users',
 				'ususers' => $this->options['username'],
 				'usprop'  => 'editcount',
-				'format'  => 'json'
+				'format'  => 'json',
 			),
 			'https://codex.wordpress.org/api.php'
 		);
 
-		$response    = wp_remote_get( $results_url );
+		$results = wp_remote_retrieve_body( wp_safe_remote_get( $results_url ) );
 
-		if ( 200 == wp_remote_retrieve_response_code( $response ) ) {
-			$results = wp_remote_retrieve_body( $response );
-
-			$raw   = json_decode( $results );
-			$count = (int) $raw->query->users[0]->editcount;
-
-			$data = array(
-				'data'       => $count,
-				'expiration' => time() + $this->expiration,
-			);
-
-			update_post_meta( $this->post->ID, '_codex_count', $data );
-
-			return $data;
+		if ( is_wp_error( $results ) ) {
+			return false;
 		}
 
-		return false;
+		$raw   = json_decode( $results );
+		$count = (int) $raw->query->users[0]->editcount;
+
+		$data = array(
+			'data'       => $count,
+			'expiration' => time() + $this->expiration,
+		);
+
+		update_post_meta( $this->post->ID, '_codex_count', $data );
+
+		return $data;
 
 	}
 

@@ -2,6 +2,10 @@
 
 namespace WPTalents\Collector;
 
+/**
+ * Class Plugin_Collector
+ * @package WPTalents\Collector
+ */
 class Plugin_Collector extends Collector {
 
 	/**
@@ -13,8 +17,8 @@ class Plugin_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_plugins', true );
 
 		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
+			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+			&& $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}

@@ -5,10 +5,17 @@ namespace WPTalents\Types;
 use WPTalents\Core\Helper;
 use \WP_Post;
 
+/**
+ * Class Person
+ * @package WPTalents\Types
+ */
 class Person implements Type {
 
 	protected $post_type = 'person';
 
+	/**
+	 *
+	 */
 	public function __construct() {
 
 		add_filter( 'wptalents_filter_request', array( $this, 'filter_request' ) );
@@ -22,6 +29,13 @@ class Person implements Type {
 		add_filter( 'post_type_archive_link', array( $this, 'filter_post_type_archive_link' ), 10, 2 );
 	}
 
+	/**
+	 * Filters the request variables.
+	 *
+	 * @param array $query_vars
+	 *
+	 * @return array
+	 */
 	public function filter_request( $query_vars ) {
 
 		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
@@ -36,6 +50,11 @@ class Person implements Type {
 
 	}
 
+	/**
+	 * @param array $post_types
+	 *
+	 * @return array
+	 */
 	public function filter_archive_post_types( array $post_types ) {
 
 		$post_types[] = $this->post_type;
@@ -107,7 +126,7 @@ class Person implements Type {
 				'update_count_callback' => '_update_post_term_count',
 				'public'                => true,
 				'show_tagcloud'         => false,
-				'rewrite'               => false
+				'rewrite'               => false,
 			);
 
 			register_taxonomy( 'region', array( 'company', 'person' ), $region_args );
@@ -137,6 +156,13 @@ class Person implements Type {
 
 	}
 
+	/**
+	 * Add CMB meta boxes.
+	 *
+	 * @param array $meta_boxes
+	 *
+	 * @return array|mixed
+	 */
 	public function add_meta_boxes( array $meta_boxes ) {
 
 		$talent_details = array(
@@ -144,19 +170,19 @@ class Person implements Type {
 				'id'   => 'wordpress-username',
 				'name' => __( 'WordPress.org username', 'wptalents' ),
 				'type' => 'text',
-				'cols' => 4
+				'cols' => 4,
 			),
 			array(
 				'id'   => 'byline',
 				'name' => __( 'Byline', 'wptalents' ),
 				'type' => 'text',
-				'cols' => 4
+				'cols' => 4,
 			),
 			array(
 				'id'   => 'job',
 				'name' => __( 'Job Title', 'wptalents' ),
 				'type' => 'text',
-				'cols' => 4
+				'cols' => 4,
 			),
 		);
 
@@ -170,46 +196,46 @@ class Person implements Type {
 						'id'   => 'url',
 						'name' => __( 'Website URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'github',
 						'name' => __( 'Github Username', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'twitter',
 						'name' => __( 'Twitter Username', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'facebook',
 						'name' => __( 'Facebook (Vanity URL)', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'google-plus',
 						'name' => __( 'Google+ (ID)', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'linkedin',
 						'name' => __( 'LinkedIn URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'crunchbase',
 						'name' => __( 'CrunchBase URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
-				)
-			)
+				),
+			),
 		);
 
 		$dawn_patrol = array(
@@ -217,13 +243,13 @@ class Person implements Type {
 				'id'   => 'dawnpatrol',
 				'name' => __( 'Dawn Patrol URL', 'wptalents' ),
 				'type' => 'url',
-				'cols' => 6
+				'cols' => 6,
 			),
 			array(
 				'id'   => 'dawnpatrol-video',
 				'name' => __( 'Dawn Patrol Video URL', 'wptalents' ),
 				'type' => 'url',
-				'cols' => 6
+				'cols' => 6,
 			),
 		);
 
@@ -231,7 +257,7 @@ class Person implements Type {
 			array(
 				'id'   => 'location',
 				'name' => __( 'Location', 'wptalents' ),
-				'desc' => __( "Stores name, coordinates and elevation.", 'wptalents' ),
+				'desc' => __( 'Stores name, coordinates and elevation.', 'wptalents' ),
 				'type' => 'gmap',
 			),
 		);
@@ -242,7 +268,7 @@ class Person implements Type {
 			'pages'    => $this->post_type,
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => $location
+			'fields'   => $location,
 		);
 
 		$meta_boxes[] = array(
@@ -251,7 +277,7 @@ class Person implements Type {
 			'pages'    => $this->post_type,
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => array_merge( $talent_details, $social_profiles )
+			'fields'   => array_merge( $talent_details, $social_profiles ),
 		);
 
 		$meta_boxes[] = array(
@@ -260,13 +286,20 @@ class Person implements Type {
 			'pages'    => $this->post_type,
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => $dawn_patrol
+			'fields'   => $dawn_patrol,
 		);
 
 		return $meta_boxes;
 
 	}
 
+	/**
+	 * Filters the body_class.
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_body_class( array $classes ) {
 
 		/** @var WP_Post $post */
@@ -299,6 +332,13 @@ class Person implements Type {
 
 	}
 
+	/**
+	 * Filters the post_class.
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_post_class( array $classes ) {
 
 		/** @var WP_Post $post */

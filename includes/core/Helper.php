@@ -10,11 +10,23 @@ use WPTalents\Collector\Plugin_Collector;
 use WPTalents\Collector\Profile_Collector;
 use WPTalents\Collector\Score_Collector;
 use WPTalents\Collector\Theme_Collector;
-use \WP_Post;
 use WPTalents\Collector\WordPressTv_Collector;
+use \WP_Post;
 
+/**
+ * Class Helper
+ * @package WPTalents\Core
+ */
 class Helper {
 
+	/**
+	 * Generate post type labels used by register_post_type().
+	 *
+	 * @param string $singular
+	 * @param string $plural
+	 *
+	 * @return array
+	 */
 	public static function post_type_labels( $singular, $plural = '' ) {
 
 		if ( '' === $plural ) {
@@ -22,17 +34,17 @@ class Helper {
 		}
 
 		return array(
-			'name'               => _x( $plural, 'post type general name' ),
-			'singular_name'      => _x( $singular, 'post type singular name' ),
+			'name'               => sprintf( _x( '%s', 'post type general name', 'wptalents' ), $plural ),
+			'singular_name'      => sprintf( _x( '%s', 'post type singular name', 'wptalents' ), $singular ),
 			'add_new'            => __( 'Add New', 'wptalents-theme' ),
-			'add_new_item'       => __( 'Add New ' . $singular, 'wptalents-theme' ),
-			'edit_item'          => __( 'Edit ' . $singular, 'wptalents-theme' ),
-			'new_item'           => __( 'New ' . $singular, 'wptalents-theme' ),
-			'view_item'          => __( 'View ' . $singular, 'wptalents-theme' ),
-			'search_items'       => __( 'Search ' . $plural, 'wptalents-theme' ),
-			'not_found'          => __( 'No ' . $plural . ' found', 'wptalents-theme' ),
-			'not_found_in_trash' => __( 'No ' . $plural . ' found in Trash', 'wptalents-theme' ),
-			'parent_item_colon'  => ''
+			'add_new_item'       => sprintf( __( 'Add New %s', 'wptalents' ), $singular ),
+			'edit_item'          => sprintf( __( 'Edit %s', 'wptalents' ), $singular ),
+			'new_item'           => sprintf( __( 'New %s', 'wptalents' ), $singular ),
+			'view_item'          => sprintf( __( 'View %s', 'wptalents' ), $singular ),
+			'search_items'       => sprintf( __( 'Search %s', 'wptalents' ), $plural ),
+			'not_found'          => sprintf( __( 'No %s found', 'wptalents' ), $plural ),
+			'not_found_in_trash' => sprintf( __( 'No %s found in Trash', 'wptalents' ), $plural ),
+			'parent_item_colon'  => '',
 		);
 
 	}
@@ -47,21 +59,22 @@ class Helper {
 	 */
 	public static function post_exists( $post_name, $post_type = 'post' ) {
 
+		/** @var $wpdb wpdb */
 		global $wpdb;
 
 		$query = "SELECT ID FROM $wpdb->posts WHERE 1=1 AND post_status IN ( 'publish', 'draft' ) ";
 		$args  = array();
 
-		if ( ! empty ( $post_name ) ) {
+		if ( ! empty( $post_name ) ) {
 			$query .= " AND post_name LIKE '%s' ";
 			$args[] = $post_name;
 		}
-		if ( ! empty ( $post_type ) ) {
+		if ( ! empty( $post_type ) ) {
 			$query .= " AND post_type = '%s' ";
 			$args[] = $post_type;
 		}
 
-		if ( ! empty ( $args ) && null !== $wpdb->get_var( $wpdb->prepare( $query, $args ) ) ) {
+		if ( ! empty( $args ) && null !== $wpdb->get_var( $wpdb->prepare( $query, $args ) ) ) {
 			return true;
 		}
 
@@ -138,7 +151,7 @@ class Helper {
 
 				if ( is_string( $location ) ) {
 					return array(
-						'name' => $location
+						'name' => $location,
 					);
 				}
 
@@ -169,7 +182,7 @@ class Helper {
 					'codex_count'     => $codex_collector->get_data(),
 					'changeset_count' => $changeset_collector->get_data(),
 					'forums'          => $forums_collector->get_data(),
-					'wordpresstv'     => $wordpresstv_collector->get_data()
+					'wordpresstv'     => $wordpresstv_collector->get_data(),
 				);
 				break;
 
@@ -180,6 +193,8 @@ class Helper {
 	 * Get the avatar of a talent.
 	 *
 	 * @param \WP_Post|int $post The post object or ID.
+	 *
+	 * @param int          $size
 	 *
 	 * @return mixed            The avatar URL on success,
 	 *                          false if the post does not exist.
@@ -219,7 +234,7 @@ class Helper {
 		);
 
 		foreach ( $meta_fields as $field => $value ) {
-			if ( empty ( $value ) ) {
+			if ( empty( $value ) ) {
 				continue;
 			}
 
@@ -227,43 +242,43 @@ class Helper {
 				case 'wordpressdotorg':
 					$social_links[ $field ] = array(
 						'name' => __( 'WordPress.org', 'wptalents' ),
-						'url'  => 'https://profiles.wordpress.org/' . $value,
+						'url'  => esc_url( 'https://profiles.wordpress.org/' . $value ),
 					);
 					break;
 				case 'url':
 					$social_links[ $field ] = array(
 						'name' => __( 'Website', 'wptalents' ),
-						'url'  => $value,
+						'url'  => esc_url( $value ),
 					);
 					break;
 				case 'linkedin':
 					$social_links[ $field ] = array(
 						'name' => __( 'LinkedIn', 'wptalents' ),
-						'url'  => $value,
+						'url'  => esc_url( $value ),
 					);
 					break;
 				case 'github':
 					$social_links[ $field ] = array(
 						'name' => __( 'GitHub', 'wptalents' ),
-						'url'  => 'https://github.com/' . $value,
+						'url'  => esc_url( 'https://github.com/' . $value ),
 					);
 					break;
 				case 'twitter':
 					$social_links[ $field ] = array(
 						'name' => __( 'Twitter', 'wptalents' ),
-						'url'  => 'https://twitter.com/' . $value,
+						'url'  => esc_url( 'https://twitter.com/' . $value ),
 					);
 					break;
 				case 'facebook':
 					$social_links[ $field ] = array(
 						'name' => __( 'Facebook', 'wptalents' ),
-						'url'  => 'https://www.facebook.com/' . $value,
+						'url'  => esc_url( 'https://www.facebook.com/' . $value ),
 					);
 					break;
 				case 'google-plus':
 					$social_links[ $field ] = array(
 						'name' => __( 'Google+', 'wptalents' ),
-						'url'  => 'https://plus.google.com/' . $value,
+						'url'  => esc_url( 'https://plus.google.com/' . $value ),
 					);
 					break;
 				default:
@@ -281,7 +296,7 @@ class Helper {
 	 * If it's a company, it returns the locations of all
 	 * team members so we can show one big map.
 	 *
-	 * @param WP_Post The post object.
+	 * @param WP_Post $post The post object.
 	 *
 	 * @return array Location data as an array
 	 */
@@ -308,8 +323,8 @@ class Helper {
 			$people = get_posts( array(
 				'connected_type'   => 'team',
 				'connected_items'  => $post,
-				'nopaging'         => true,
-				'suppress_filters' => false
+				'posts_per_page'   => - 1,
+				'suppress_filters' => false,
 			) );
 
 			/** @var \WP_Post $person */
@@ -328,6 +343,14 @@ class Helper {
 
 	}
 
+	/**
+	 * Get the URL of an attachment based on its ID.
+	 *
+	 * @param int    $attachment
+	 * @param string $size
+	 *
+	 * @return bool|string
+	 */
 	public static function get_attachment_url( $attachment, $size = 'full' ) {
 
 		$image = wp_get_attachment_image_src( $attachment, $size );

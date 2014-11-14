@@ -2,6 +2,10 @@
 
 namespace WPTalents\Collector;
 
+/**
+ * Class Theme_Collector
+ * @package WPTalents\Collector
+ */
 class Theme_Collector extends Collector {
 
 	/**

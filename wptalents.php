@@ -25,7 +25,7 @@
 defined( 'ABSPATH' ) or die();
 
 // Define our constants
-( ! defined( 'WP_TALENTS_DIR') ) &&	define( 'WP_TALENTS_DIR', plugin_dir_path( __FILE__ ) );
+( ! defined( 'WP_TALENTS_DIR' ) ) && define( 'WP_TALENTS_DIR', plugin_dir_path( __FILE__ ) );
 ( ! defined( 'WP_TALENTS_URL' ) ) && define( 'WP_TALENTS_URL', plugins_url( '', __FILE__ ) );
 
 /**
@@ -56,7 +56,7 @@ register_deactivation_hook( __FILE__, 'wptalents_deactivation' );
  * Plugin Initialization
  */
 function wptalents_startup() {
-	require_once( 'public/template-tags.php');
+	require_once( 'public/template-tags.php' );
 
 	new \WPTalents\Core\Plugin();
 }

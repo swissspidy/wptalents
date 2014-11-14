@@ -80,7 +80,7 @@
       }
     });
 
-  }
+  };
 
   CMB.addCallbackForInit( function() {
     $('.WPTalentsCMBGmap_Field .field-item').each(function() {

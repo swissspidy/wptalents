@@ -4,8 +4,18 @@
  */
 
 namespace WPTalents\API;
+use WPTalents\Core\Helper;
+use \WP_Error;
+use \WP_JSON_Server;
+use \WP_JSON_Response;
+use \WP_JSON_CustomPostType;
+use \WP_JSON_ResponseHandler;
 
-class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
+/**
+ * Class Talents
+ * @package WPTalents\API
+ */
+class Talents extends WP_JSON_CustomPostType {
 
 	/**
 	 * Base route name.
@@ -41,17 +51,27 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 	 * @return array Modified routes
 	 */
 	public function register_routes( $routes ) {
-		$routes[$this->base] = array(
-			array( array( $this, 'get_posts'), WP_JSON_Server::READABLE ),
+
+		$routes[ $this->base ] = array(
+			array( array( $this, 'get_posts' ), WP_JSON_Server::READABLE ),
 		);
 
-		$routes[$this->base . '/(?P<id>\d+)'] = array(
-			array( array( $this, 'get_post'), WP_JSON_Server::READABLE ),
+		$routes[ $this->base . '/(?P<id>\d+)' ] = array(
+			array( array( $this, 'get_post' ), WP_JSON_Server::READABLE ),
 		);
 
 		return $routes;
+
 	}
 
+	/**
+	 * @param array  $filter
+	 * @param string $context
+	 * @param null   $type
+	 * @param int    $page
+	 *
+	 * @return \WP_Error|array
+	 */
 	public function get_posts( $filter = array(), $context = 'view', $type = null, $page = 1 ) {
 		if ( ! empty( $type ) && $type !== $this->type ) {
 			return new WP_Error( 'json_post_invalid_type', __( 'Invalid post type' ), array( 'status' => 400 ) );
@@ -64,6 +84,11 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 	 * Retrieve a post
 	 *
 	 * @see WP_JSON_Posts::get_post()
+	 *
+	 * @param        $id
+	 * @param string $context
+	 *
+	 * @return \WP_JSON_Response
 	 */
 	public function get_post( $id, $context = 'view' ) {
 		$id = (int) $id;
@@ -72,6 +97,7 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 			return new WP_Error( 'json_post_invalid_id', __( 'Invalid post ID.' ), array( 'status' => 404 ) );
 		}
 
+		/** @var array $post */
 		$post = get_post( $id, ARRAY_A );
 
 		if ( ! in_array( $post['post_type'], $this->type ) ) {
@@ -124,7 +150,7 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 		setup_postdata( $post_obj );
 
 		// Fetch our talent meta
-		$talent_meta = WP_Talents_Helper::get_talent_meta( $post_obj );
+		$talent_meta = Helper::get_talent_meta( $post_obj );
 
 		// Prepare common post fields
 		$post_fields = array(
@@ -162,7 +188,7 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 		}
 
 		// Dates
-		if ( $post['post_date_gmt'] === '0000-00-00 00:00:00' ) {
+		if ( '0000-00-00 00:00:00' === $post['post_date_gmt']  ) {
 			$post_fields['date'] = null;
 			$post_fields_extended['date_gmt'] = null;
 		}
@@ -171,7 +197,7 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 			$post_fields_extended['date_gmt'] = json_mysql_to_rfc3339( $post['post_date_gmt'] );
 		}
 
-		if ( $post['post_modified_gmt'] === '0000-00-00 00:00:00' ) {
+		if ( '0000-00-00 00:00:00' === $post['post_modified_gmt']  ) {
 			$post_fields['modified'] = null;
 			$post_fields_extended['modified_gmt'] = null;
 		}
@@ -194,7 +220,7 @@ class WP_Talents_Talents_API extends WP_JSON_CustomPostType {
 
 		$_post['meta'] = array( 'links' => $links );
 
-		return apply_filters( "json_prepare_talent", $_post, $post, $context );
+		return apply_filters( 'json_prepare_talent', $_post, $post, $context );
 	}
 
 }

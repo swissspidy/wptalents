@@ -3,16 +3,30 @@
 namespace WPTalents\Types;
 use WPTalents\Core\Helper;
 
+/**
+ * Class Job
+ * @package WPTalents\Types
+ */
 class Job implements Type {
 
 	protected $post_type = 'job';
 
+	/**
+	 *
+	 */
 	public function __construct() {
 
 		add_filter( 'wptalents_filter_request', array( $this, 'filter_request' ) );
 
 	}
 
+	/**
+	 * Filters the request variables.
+	 *
+	 * @param array $query_vars
+	 *
+	 * @return array
+	 */
 	public function filter_request( $query_vars ) {
 
 		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
@@ -36,7 +50,7 @@ class Job implements Type {
 			'show_in_menu'  => true,
 			'query_var'     => true,
 			'rewrite'       => array(
-				'slug' => $this->post_type
+				'slug' => $this->post_type,
 			),
 			'has_archive'   => true,
 			'hierarchical'  => false,
@@ -50,18 +64,39 @@ class Job implements Type {
 
 	public function register_taxonomy() {}
 
+	/**
+	 * Add CMB meta boxes.
+	 *
+	 * @param array $meta_boxes
+	 *
+	 * @return array|mixed
+	 */
 	public function add_meta_boxes( array $meta_boxes ) {
 
 		return $meta_boxes;
 
 	}
 
+	/**
+	 * Filters the body_class.
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_body_class( array $classes ) {
 
 		return $classes;
 
 	}
 
+	/**
+	 * Filters the post_class.
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_post_class( array $classes ) {
 
 		/** @var WP_Post $post */

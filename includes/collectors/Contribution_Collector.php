@@ -3,8 +3,17 @@
 namespace WPTalents\Collector;
 use \WP_Post;
 
+/**
+ * Class Contribution_Collector
+ * @package WPTalents\Collector
+ */
 class Contribution_Collector extends Collector {
 
+	/**
+	 * Initialize the collector.
+	 *
+	 * @param WP_Post $post
+	 */
 	public function __construct( WP_Post $post ) {
 
 		$this->expiration = 4 * WEEK_IN_SECONDS;
@@ -57,7 +66,7 @@ class Contribution_Collector extends Collector {
 	/**
 	 * @param string $version The WP version to check.
 	 *
-	 * @return bool|string| The user's role on success, false otherwise.
+	 * @return bool|string The user's role on success, false otherwise.
 	 */
 	protected function _loop_wp_version( $version ) {
 
@@ -113,9 +122,11 @@ class Contribution_Collector extends Collector {
 			return false;
 		}
 
-		$response = wp_remote_get( 'http://api.wordpress.org/core/credits/1.1/?version=' . $wp_version . '&locale=' . $locale );
+		$response = wp_remote_retrieve_body( wp_safe_remote_get(
+			'http://api.wordpress.org/core/credits/1.1/?version=' . $wp_version . '&locale=' . $locale
+		) );
 
-		if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
+		if ( '' === $response ) {
 			return false;
 		}
 

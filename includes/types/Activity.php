@@ -3,10 +3,18 @@
 namespace WPTalents\Types;
 use WPTalents\Core\Helper;
 
+/**
+ * Class Activity
+ * @package WPTalents\Types
+ */
 class Activity implements Type {
 
 	protected $post_type = 'activity';
 
+
+	/**
+	 * Initialize the constructor.
+	 */
 	public function __construct() {}
 
 	public function register_post_type() {
@@ -18,7 +26,7 @@ class Activity implements Type {
 			'show_in_menu'  => true,
 			'query_var'     => true,
 			'rewrite'       => array(
-				'slug' => 'activity'
+				'slug' => 'activity',
 			),
 			'has_archive'   => true,
 			'hierarchical'  => false,
@@ -45,18 +53,33 @@ class Activity implements Type {
 
 	}
 
+	/**
+	 * @param array $meta_boxes
+	 *
+	 * @return array
+	 */
 	public function add_meta_boxes( array $meta_boxes ) {
 
 		return $meta_boxes;
 
 	}
 
+	/**
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_body_class( array $classes ) {
 
 		return $classes;
 
 	}
 
+	/**
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_post_class( array $classes ) {
 
 		return $classes;

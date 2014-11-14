@@ -15,6 +15,14 @@ function wptalents_get_avatar( $post = null, $size = 144 ) {
 	return Helper::get_avatar( get_post( $post ), $size );
 }
 
+/**
+ * Get the URL of an attachment based on its ID.
+ *
+ * @param int    $attachment
+ * @param string $size
+ *
+ * @return bool|string
+ */
 function wptalents_get_attachment_url( $attachment, $size = 'full' ) {
 	return Helper::get_attachment_url( $attachment, $size );
 }

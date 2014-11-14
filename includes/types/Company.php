@@ -1,13 +1,21 @@
 <?php
 
 namespace WPTalents\Types;
+
 use WPTalents\Core\Helper;
 use \WP_Post;
 
+/**
+ * Class Company
+ * @package WPTalents\Types
+ */
 class Company implements Type {
 
 	protected $post_type = 'company';
 
+	/**
+	 * Initialize the constructor.
+	 */
 	public function __construct() {
 
 		add_filter( 'wptalents_filter_request', array( $this, 'filter_request' ) );
@@ -20,6 +28,11 @@ class Company implements Type {
 
 	}
 
+	/**
+	 * @param array $query_vars
+	 *
+	 * @return array
+	 */
 	public function filter_request( $query_vars ) {
 
 		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
@@ -34,6 +47,11 @@ class Company implements Type {
 
 	}
 
+	/**
+	 * @param array $post_types
+	 *
+	 * @return array
+	 */
 	public function filter_archive_post_types( array $post_types ) {
 
 		$post_types[] = $this->post_type;
@@ -105,7 +123,7 @@ class Company implements Type {
 				'update_count_callback' => '_update_post_term_count',
 				'public'                => true,
 				'show_tagcloud'         => false,
-				'rewrite'               => false
+				'rewrite'               => false,
 			);
 
 			register_taxonomy( 'region', array( 'company', 'person' ), $region_args );
@@ -135,6 +153,11 @@ class Company implements Type {
 
 	}
 
+	/**
+	 * @param array $meta_boxes
+	 *
+	 * @return array
+	 */
 	public function add_meta_boxes( array $meta_boxes ) {
 
 		$talent_details = array(
@@ -142,19 +165,19 @@ class Company implements Type {
 				'id'   => 'wordpress-username',
 				'name' => __( 'WordPress.org username', 'wptalents' ),
 				'type' => 'text',
-				'cols' => 4
+				'cols' => 4,
 			),
 			array(
 				'id'   => 'byline',
 				'name' => __( 'Byline', 'wptalents' ),
 				'type' => 'text',
-				'cols' => 4
+				'cols' => 4,
 			),
 			array(
 				'id'   => 'wordpress-com-vip',
 				'name' => __( 'WordPress.com VIP partner', 'wptalents' ),
 				'type' => 'checkbox',
-				'cols' => 4
+				'cols' => 4,
 			),
 		);
 
@@ -168,53 +191,53 @@ class Company implements Type {
 						'id'   => 'url',
 						'name' => __( 'Website URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'github',
 						'name' => __( 'Github Username', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'twitter',
 						'name' => __( 'Twitter Username', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'facebook',
 						'name' => __( 'Facebook (Vanity URL)', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'google-plus',
 						'name' => __( 'Google+ (ID)', 'wptalents' ),
 						'type' => 'text',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'linkedin',
 						'name' => __( 'LinkedIn URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'crunchbase',
 						'name' => __( 'CrunchBase URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
-				)
-			)
+				),
+			),
 		);
 
 		$location = array(
 			array(
 				'id'   => 'location',
 				'name' => __( 'Location', 'wptalents' ),
-				'desc' => __( "Stores name, coordinates and elevation.", 'wptalents' ),
+				'desc' => __( 'Stores name, coordinates and elevation.', 'wptalents' ),
 				'type' => 'gmap',
 			),
 		);
@@ -224,7 +247,7 @@ class Company implements Type {
 			'pages'    => $this->post_type,
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => $location
+			'fields'   => $location,
 		);
 
 		$meta_boxes[] = array(
@@ -232,13 +255,18 @@ class Company implements Type {
 			'pages'    => $this->post_type,
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => array_merge( $talent_details, $social_profiles )
+			'fields'   => array_merge( $talent_details, $social_profiles ),
 		);
 
 		return $meta_boxes;
 
 	}
 
+	/**
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_body_class( array $classes ) {
 
 		/** @var WP_Post $post */
@@ -251,7 +279,6 @@ class Company implements Type {
 		if ( $this->post_type === $post->post_type ) {
 			// Add default classes
 			$classes[] = 'talent';
-
 
 			if ( has_post_thumbnail( $post->ID ) ) {
 
@@ -268,6 +295,11 @@ class Company implements Type {
 
 	}
 
+	/**
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_post_class( array $classes ) {
 
 		/** @var WP_Post $post */

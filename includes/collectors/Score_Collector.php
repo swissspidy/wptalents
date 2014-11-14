@@ -5,6 +5,10 @@ namespace WPTalents\Collector;
 use WPTalents\Core\Helper;
 use \DateTime;
 
+/**
+ * Class Score_Collector
+ * @package WPTalents\Collector
+ */
 class Score_Collector extends Collector {
 
 	/**
@@ -60,39 +64,31 @@ class Score_Collector extends Collector {
 		}
 
 		// Calculate WordPress.org profile data score
-		if ( $badges = $talent_meta['profile']['badges'] ) {
-			$score += $this->_calculate_badge_score( $badges );
-		}
+		$score += $this->_calculate_badge_score( $talent_meta['profile']['badges'] );
 
 		// Adjust score based on number of core contributions
-		if ( $contributions = $talent_meta['contributions'] ) {
-			$score += $this->_calculate_contribution_score(
-				$contributions,
-				$talent_meta['codex_count'],
-				$talent_meta['contribution_count']
-			);
-		}
+		$score += $this->_calculate_contribution_score(
+			$talent_meta['contributions'],
+			$talent_meta['codex_count'],
+			$talent_meta['contribution_count']
+		);
 
 		// Adjust score based on number of WordPress.tv videos
-		if ( $videos = $talent_meta['wordpresstv'] ) {
-			$score += $this->_calculate_wordpresstv_score( $videos );
-		}
+		$score += $this->_calculate_wordpresstv_score( $talent_meta['wordpresstv'] );
 
-		if ( $forums = $talent_meta['forums'] ) {
-			$score += $this->_calculate_forums_score( $forums );
-		}
+		$score += $this->_calculate_forums_score( $talent_meta['forums'] );
 
 		// Get median score for the company
 		if ( 'company' === get_post_type( $this->post ) ) {
-
 			if ( 1 == get_post_meta( $this->post->ID, 'wordpress_vip' ) ) {
 				$score += 10;
 			}
 
-			if ( $team_score = $this->_calculate_team_score() ) {
-				$score = ( $this->_calculate_team_score() + $score ) / 2;
-			}
+			$team_score = $this->_calculate_team_score();
 
+			if ( $team_score ) {
+				$score = ( $team_score + $score ) / 2;
+			}
 		}
 
 		update_post_meta( $this->post->ID, '_score', absint( $score ) );
@@ -102,6 +98,13 @@ class Score_Collector extends Collector {
 
 	}
 
+	/**
+	 * Calculate score based on a user's plugins.
+	 *
+	 * @param array $plugins
+	 *
+	 * @return int
+	 */
 	public function _calculate_plugin_score( $plugins ) {
 
 		$score = 0;
@@ -151,6 +154,13 @@ class Score_Collector extends Collector {
 
 	}
 
+	/**
+	 * Calculate score based on a user's themes.
+	 *
+	 * @param $themes
+	 *
+	 * @return int
+	 */
 	public function _calculate_theme_score( $themes ) {
 
 		$score = 0;
@@ -169,7 +179,7 @@ class Score_Collector extends Collector {
 
 		// Check the average downloads count using the median value
 		sort( $total_downloads, SORT_NUMERIC );
-		$avg_downloads = $total_downloads[ round( count( $total_downloads ) / 2 ) - 1 ];
+		$avg_downloads = $total_downloads[ (int) round( count( $total_downloads ) / 2 ) - 1 ];
 
 		// Adjust score based on average downloads
 		if ( $avg_downloads > 100000 ) {
@@ -188,6 +198,13 @@ class Score_Collector extends Collector {
 
 	}
 
+	/**
+	 * Calculate the score for all the user's badges.
+	 *
+	 * @param array $badges
+	 *
+	 * @return int
+	 */
 	public function _calculate_badge_score( $badges ) {
 
 		$score = 0;
@@ -226,6 +243,15 @@ class Score_Collector extends Collector {
 
 	}
 
+	/**
+	 * Calculate the score for all the users' contributions.
+	 *
+	 * @param array $contributions
+	 * @param int   $codex_count
+	 * @param int   $changeset_count
+	 *
+	 * @return int
+	 */
 	public function _calculate_contribution_score( $contributions, $codex_count = 0, $changeset_count = 0 ) {
 
 		$score = 0;
@@ -269,10 +295,15 @@ class Score_Collector extends Collector {
 		// Adjust score based on number of props
 		$score += ( $changeset_count / 20 < 20 ) ? $changeset_count / 20 : 20;
 
-		return $score;
+		return absint( $score );
 
 	}
 
+	/**
+	 * Calculate the overall team score.
+	 *
+	 * @return bool|int
+	 */
 	public function _calculate_team_score() {
 
 		$score = 0;
@@ -281,11 +312,11 @@ class Score_Collector extends Collector {
 		$people = get_posts( array(
 			'connected_type'   => 'team',
 			'connected_items'  => $this->post,
-			'nopaging'         => true,
-			'suppress_filters' => false
+			'posts_per_page'   => - 1,
+			'suppress_filters' => false,
 		) );
 
-		/** @var WP_Post $person */
+		/** @var \WP_Post $person */
 		foreach ( $people as $person ) {
 			$person_collector = new self( $person );
 			$score += $person_collector->get_data();
@@ -294,13 +325,20 @@ class Score_Collector extends Collector {
 		}
 
 		if ( $people ) {
-			return $score / count( $people );
+			return absint( $score / count( $people ) );
 		}
 
 		return false;
 
 	}
 
+	/**
+	 * Calculate score based on a user's videos on WordPress.tv.
+	 *
+	 * @param array $videos
+	 *
+	 * @return int
+	 */
 	public function _calculate_wordpresstv_score( $videos ) {
 
 		$score = 0;
@@ -324,6 +362,13 @@ class Score_Collector extends Collector {
 
 	}
 
+	/**
+	 * Calculate score based on a user's forums contributions.
+	 *
+	 * @param array $forums
+	 *
+	 * @return int
+	 */
 	public function _calculate_forums_score( $forums ) {
 
 		$score = 0;
@@ -334,7 +379,7 @@ class Score_Collector extends Collector {
 		if ( $total_replies >= 1000 ) {
 			$score = 50;
 		} else if ( $total_replies > 750 ) {
-			$score = 37.5;
+			$score = 37;
 		} else if ( $total_replies >= 490 ) {
 			$score = 25;
 		} else if ( $total_replies >= 90 ) {

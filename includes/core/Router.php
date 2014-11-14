@@ -2,8 +2,15 @@
 
 namespace WPTalents\Core;
 
+/**
+ * Class Router
+ * @package WPTalents\Core
+ */
 class Router {
 
+	/**
+	 *
+	 */
 	public function __construct() {
 
 		add_filter( 'query_vars', array( $this, 'filter_query_vars' ) );
@@ -86,7 +93,7 @@ class Router {
 		}
 
 		// Unset the unused query var
-		unset ( $query_vars['talent'] );
+		unset( $query_vars['talent'] );
 
 		return $query_vars;
 
@@ -112,7 +119,7 @@ class Router {
 	}
 
 	/**
-	 * @param WP_Query $query
+	 * @param \WP_Query $query
 	 */
 	public function pre_get_posts( $query ) {
 

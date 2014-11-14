@@ -52,7 +52,7 @@ class Gmap_Field extends \CMB_Gmap_Field {
 				'zoom'      => $this->args['default_zoom'],
 			),
 			'strings'  => array(
-				'markerTitle' => $this->args['string-marker-title']
+				'markerTitle' => $this->args['string-marker-title'],
 			)
 		) );
 
@@ -70,7 +70,7 @@ class Gmap_Field extends \CMB_Gmap_Field {
 		 * where location was stored as a string
 		 */
 		$location = ( is_string( $value ) && ! empty( $value ) ) ? $value : null;
-		( is_string( $value) ) && $value = array();
+		( is_string( $value ) ) && $value = array();
 
 		$value = wp_parse_args(
 			$value,
@@ -81,7 +81,7 @@ class Gmap_Field extends \CMB_Gmap_Field {
 			sprintf( 'width: %s;', $this->args['field_width'] ),
 			sprintf( 'height: %s;', $this->args['field_height'] ),
 			'border: 1px solid #eee;',
-			'margin-top: 8px;'
+			'margin-top: 8px;',
 		);
 		?>
 

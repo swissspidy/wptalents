@@ -9,13 +9,18 @@ use WPTalents\Types\Person;
 use WPTalents\Types\Product;
 use WPTalents\API\Talents;
 use WPTalents\API\Products;
+use \WP_JSON_ResponseHandler;
 
+/**
+ * Class Plugin
+ * @package WPTalents\Core
+ */
 class Plugin {
 
-	/* @var $types WP_Talents_Type[] */
+	/* @var $types \WPTalents\Types\Type[] */
 	protected $types = array();
 
-	/* @var $router WP_Talents_Router */
+	/* @var $router Router */
 	protected $router;
 
 	/**
@@ -27,6 +32,9 @@ class Plugin {
 	 */
 	const VERSION = '1.0.0';
 
+	/**
+	 * Initialize the constructor.
+	 */
 	public function __construct() {
 
 		// Setup the router class
@@ -56,7 +64,7 @@ class Plugin {
 
 		// FacetWP
 
-		add_filter( 'facetwp_sort_options', array( __CLASS__, 'facetwp_sort_options' ), 10, 2 );
+		add_filter( 'facetwp_sort_options', array( __CLASS__, 'facetwp_sort_options' ), 10 );
 
 		add_filter( 'facetwp_pager_html', array( __CLASS__, 'facetwp_pager_html' ), 10, 2 );
 
@@ -68,6 +76,9 @@ class Plugin {
 
 	}
 
+	/**
+	 * Add rewrite rules for the plugin.
+	 */
 	public function add_rewrite_rules() {
 
 		add_rewrite_rule( '([^/]+)?/?$', 'index.php?talent=$matches[1]', 'top' );
@@ -122,6 +133,9 @@ class Plugin {
 
 	}
 
+	/**
+	 * Initialize all the content types.
+	 */
 	public function add_types() {
 
 		$this->types = apply_filters( 'wptalents_types', array(
@@ -134,18 +148,24 @@ class Plugin {
 
 	}
 
+	/**
+	 * Register all post types.
+	 */
 	public function register_post_types() {
 
-		/** @var $type WP_Talents_Type */
+		/** @var $type \WPTalents\Types\Type */
 		foreach ( $this->types as $type ) {
 			$type->register_post_type();
 		}
 
 	}
 
+	/**
+	 * Register all taxonomies.
+	 */
 	public function register_taxonomies() {
 
-		/** @var $type WP_Talents_Type */
+		/** @var $type \WPTalents\Types\Type */
 		foreach ( $this->types as $type ) {
 			$type->register_taxonomy();
 		}
@@ -167,7 +187,7 @@ class Plugin {
 			'title'           => __( 'Connected', 'wptalents' ),
 			'admin_box'       => array(
 				'show'    => 'from',
-				'context' => 'side'
+				'context' => 'side',
 			),
 			'can_create_post' => false,
 			'to_query_vars'   => array( 'post_status' => 'any' ),
@@ -182,7 +202,7 @@ class Plugin {
 			'title'           => __( 'Owner', 'wptalents' ),
 			'admin_box'       => array(
 				'show'    => 'from',
-				'context' => 'side'
+				'context' => 'side',
 			),
 			'can_create_post' => false,
 			'to_query_vars'   => array( 'post_status' => 'any' ),
@@ -197,7 +217,7 @@ class Plugin {
 			'title'           => __( 'Employees', 'wptalents' ),
 			'admin_box'       => array(
 				'show'    => 'from',
-				'context' => 'side'
+				'context' => 'side',
 			),
 			'fields'          => array(
 				// Todo: Add From-To dates so we can see past companies
@@ -209,7 +229,7 @@ class Plugin {
 						'founder'  => __( 'Founder', 'wptalents' ),
 						'employee' => __( 'Employee', 'wptalents' )
 					),
-					'default' => 'employee'
+					'default' => 'employee',
 				),
 			),
 			'can_create_post' => false,
@@ -225,7 +245,7 @@ class Plugin {
 			'title'           => __( 'Open Jobs', 'wptalents' ),
 			'admin_box'       => array(
 				'show'    => 'from',
-				'context' => 'side'
+				'context' => 'side',
 			),
 			'can_create_post' => false,
 			'to_query_vars'   => array( 'post_status' => 'any' ),
@@ -243,6 +263,13 @@ class Plugin {
 
 	}
 
+	/**
+	 * Add our custom CMB field types.
+	 *
+	 * @param array $cmb_field_types
+	 *
+	 * @return array
+	 */
 	public function add_cmb_field_types( array $cmb_field_types ) {
 
 		$cmb_field_types['gmap'] = 'WPTalents\CMB\Gmap_Field';
@@ -251,6 +278,9 @@ class Plugin {
 
 	}
 
+	/**
+	 * Activate each type's body_class filter.
+	 */
 	public function filter_body_class() {
 
 		/** @var $type WP_Talents_Type */
@@ -260,6 +290,9 @@ class Plugin {
 
 	}
 
+	/**
+	 * Activate each type's post_class filter
+	 */
 	public function filter_post_class() {
 
 		/** @var $type WP_Talents_Type */
@@ -303,7 +336,7 @@ class Plugin {
 		// Set variables for storage
 		$file_array = array(
 			'name'     => get_post( $post_id )->post_name . '-map.png',
-			'tmp_name' => $tmp
+			'tmp_name' => $tmp,
 		);
 
 		// If error storing temporarily, unlink
@@ -329,18 +362,17 @@ class Plugin {
 	 * Filter the FacetWP sort options.
 	 *
 	 * @param  array $options
-	 * @param  array $params
 	 *
 	 * @return array
 	 */
-	public static function facetwp_sort_options( $options, $params ) {
+	public static function facetwp_sort_options( $options ) {
 
 		$options['score_desc'] = array(
 			'label'      => __( 'Score (Highest)', 'wptalents' ),
 			'query_args' => array(
 				'orderby'  => 'meta_value_num',
 				'order'    => 'DESC',
-				'meta_key' => '_score'
+				'meta_key' => '_score',
 			)
 		);
 
@@ -349,7 +381,7 @@ class Plugin {
 			'query_args' => array(
 				'orderby'  => 'meta_value_num',
 				'order'    => 'ASC',
-				'meta_key' => '_score'
+				'meta_key' => '_score',
 			)
 		);
 
@@ -370,6 +402,7 @@ class Plugin {
 	 */
 	public static function facetwp_pager_html( $output, $params ) {
 
+		unset( $output );
 		$output = '';
 
 		$page       = (int) $params['page'];
@@ -387,10 +420,6 @@ class Plugin {
 		if ( 1 >= $total_pages ) {
 			return $output;
 		}
-
-		$prev = _x( '←', 'Previous page link in pagination', 'wptalents' );
-		$next = _x( '→', 'Next page link in pagination', 'talented' );
-
 
 		if ( 3 < $page ) {
 			$output .= '<a class="facetwp-page first-page" data-page="1">&laquo;</a>';

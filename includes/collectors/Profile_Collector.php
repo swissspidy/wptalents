@@ -3,9 +3,13 @@
 namespace WPTalents\Collector;
 
 use \DOMDocument;
-use \DomXPath;
+use \DOMXPath;
 use \DateTime;
 
+/**
+ * Class Profile_Collector
+ * @package WPTalents\Collector
+ */
 class Profile_Collector extends Collector {
 
 	/**
@@ -17,8 +21,8 @@ class Profile_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_profile', true );
 
 		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
+			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+			&& $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -39,18 +43,15 @@ class Profile_Collector extends Collector {
 
 		$url = 'https://profiles.wordpress.org/' . $this->options['username'];
 
-		$request = wp_remote_get( $url, array( 'redirection' => 0 ) );
-		$code    = wp_remote_retrieve_response_code( $request );
-
-		if ( 200 !== $code ) {
-			return false;
-		}
-
-		$body = wp_remote_retrieve_body( $request );
+		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
 		$dom = new DOMDocument();
-		@$dom->loadHTML( $body ); // Error supressing due to the fact that special characters haven't been converted to HTML.
-		$finder = new DomXPath( $dom );
+
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( $body );
+		libxml_clear_errors();
+
+		$finder = new DOMXPath( $dom );
 
 		$name         = $finder->query( '//h2[@class="fn"]' );
 		$avatar       = $finder->query( '//div[@id="meta-status-badge-container"]/a/img' );

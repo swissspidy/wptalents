@@ -3,9 +3,13 @@
 namespace WPTalents\Collector;
 
 use \DOMDocument;
-use \DomXPath;
+use \DOMXPath;
 use \DateTime;
 
+/**
+ * Class WordPressTv_Collector
+ * @package WPTalents\Collector
+ */
 class WordPressTv_Collector extends Collector {
 
 	/**
@@ -17,8 +21,8 @@ class WordPressTv_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_wordpresstv', true );
 
 		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
+			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+			&& $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -53,9 +57,16 @@ class WordPressTv_Collector extends Collector {
 
 	}
 
+	/**
+	 * Load the videos from a specified page. Is partly recursive.
+	 *
+	 * @param $url
+	 *
+	 * @return array
+	 */
 	public function _retrieve_videos( $url ) {
 
-		$body = wp_remote_retrieve_body( wp_remote_get( $url ) );
+		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
 		if ( '' === $body ) {
 			return false;
@@ -67,7 +78,7 @@ class WordPressTv_Collector extends Collector {
 		$dom->loadHTML( $body );
 		libxml_clear_errors();
 
-		$finder = new DomXPath( $dom );
+		$finder = new DOMXPath( $dom );
 
 		$videos       = $finder->query( '//*[contains(@class, "video-list")]/li' );
 		$older_videos = $finder->query( '//*[contains(@class, "nav-previous")]/a' );
@@ -96,7 +107,7 @@ class WordPressTv_Collector extends Collector {
 				'url'         => $a_href,
 				'image'       => $img,
 				'event'       => $event,
-				'description' => $description
+				'description' => $description,
 			);
 		}
 

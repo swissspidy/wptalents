@@ -3,8 +3,12 @@
 namespace WPTalents\Collector;
 
 use \DOMDocument;
-use \DomXPath;
+use \DOMXPath;
 
+/**
+ * Class Forums_Collector
+ * @package WPTalents\Collector
+ */
 class Forums_Collector extends Collector {
 
 	/**
@@ -16,8 +20,8 @@ class Forums_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_forums', true );
 
 		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
+			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+			&& $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -39,7 +43,7 @@ class Forums_Collector extends Collector {
 
 		$url = 'https://wordpress.org/support/profile/' . $this->options['username'];
 
-		$body = wp_remote_retrieve_body( wp_remote_get( $url ) );
+		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
 		if ( '' === $body ) {
 			return false;
@@ -51,7 +55,7 @@ class Forums_Collector extends Collector {
 		$dom->loadHTML( $body );
 		libxml_clear_errors();
 
-		$finder = new DomXPath( $dom );
+		$finder = new DOMXPath( $dom );
 
 		$recent_replies  = $finder->query( '//div[@id="user-replies"]/ol/li' );
 		$threads_started = $finder->query( '//div[@id="user-threads"]/ol/li' );
@@ -60,7 +64,7 @@ class Forums_Collector extends Collector {
 		$data = array(
 			'replies' => '',
 			'threads' => '',
-			'total_replies'  => ''
+			'total_replies'  => '',
 		);
 
 		if ( $page_numbers->length ) {

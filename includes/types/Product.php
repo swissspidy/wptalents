@@ -3,16 +3,28 @@
 namespace WPTalents\Types;
 use WPTalents\Core\Helper;
 
+/**
+ * Class Product
+ * @package WPTalents\Types
+ */
 class Product implements Type {
 
 	protected $post_type = 'product';
 
+	/**
+	 *
+	 */
 	public function __construct() {
 
 		add_filter( 'wptalents_filter_request', array( $this, 'filter_request' ) );
 
 	}
 
+	/**
+	 * @param $query_vars
+	 *
+	 * @return mixed
+	 */
 	public function filter_request( $query_vars ) {
 
 		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
@@ -36,7 +48,7 @@ class Product implements Type {
 			'show_in_menu'  => true,
 			'query_var'     => true,
 			'rewrite'       => array(
-				'slug' => $this->post_type
+				'slug' => $this->post_type,
 			),
 			'has_archive'   => true,
 			'hierarchical'  => false,
@@ -58,13 +70,20 @@ class Product implements Type {
 			'update_count_callback' => '_update_post_term_count',
 			'public'                => true,
 			'show_tagcloud'         => false,
-			'rewrite'               => false
+			'rewrite'               => false,
 		);
 
 		register_taxonomy( 'product-category', $this->post_type, $args );
 
 	}
 
+	/**
+	 * Add CMB meta boxes.
+	 *
+	 * @param array $meta_boxes
+	 *
+	 * @return array|mixed
+	 */
 	public function add_meta_boxes( array $meta_boxes ) {
 
 		$product_details = array(
@@ -72,7 +91,7 @@ class Product implements Type {
 				'id'   => 'byline',
 				'name' => __( 'Byline', 'wptalents' ),
 				'type' => 'text',
-				'cols' => 4
+				'cols' => 4,
 			),
 		);
 
@@ -86,16 +105,16 @@ class Product implements Type {
 						'id'   => 'url',
 						'name' => __( 'Website URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
 					array(
 						'id'   => 'crunchbase',
 						'name' => __( 'CrunchBase URL', 'wptalents' ),
 						'type' => 'text_url',
-						'cols' => 4
+						'cols' => 4,
 					),
-				)
-			)
+				),
+			),
 		);
 
 		$meta_boxes[] = array(
@@ -103,22 +122,36 @@ class Product implements Type {
 			'pages'    => $this->post_type,
 			'context'  => 'advanced',
 			'priority' => 'high',
-			'fields'   => array_merge( $product_details, $social_profiles )
+			'fields'   => array_merge( $product_details, $social_profiles ),
 		);
 
 		return $meta_boxes;
 
 	}
 
+	/**
+	 * Filters the body_class.
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_body_class( array $classes ) {
 
 		return $classes;
 
 	}
 
+	/**
+	 * Filters the post_class.
+	 *
+	 * @param array $classes
+	 *
+	 * @return array
+	 */
 	public function filter_post_class( array $classes ) {
 
-		/** @var WP_Post $post */
+		/** @var \WP_Post $post */
 		global $post;
 
 		if ( $this->post_type !== $post->post_type ) {

@@ -2,6 +2,10 @@
 
 namespace WPTalents\Collector;
 
+/**
+ * Class Changeset_Collector
+ * @package WPTalents\Collector
+ */
 class Changeset_Collector extends Collector {
 
 	/**
@@ -13,8 +17,8 @@ class Changeset_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_changeset_count', true );
 
 		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
+			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+			&& $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -38,32 +42,31 @@ class Changeset_Collector extends Collector {
 			array(
 				'q'           => 'props+' . $this->options['username'],
 				'noquickjump' => '1',
-				'changeset'   => 'on'
+				'changeset'   => 'on',
 			),
 			'https://core.trac.wordpress.org/search'
 		);
 
-		$response    = wp_remote_get( $results_url );
+		$results = wp_remote_retrieve_body( wp_safe_remote_get( $results_url ) );
 
-		if ( 200 == wp_remote_retrieve_response_code( $response ) ) {
-			$results = wp_remote_retrieve_body( $response );
-			$pattern = '/<meta name="totalResults" content="(\d*)" \/>/';
-
-			preg_match( $pattern, $results, $matches );
-
-			$count = intval( $matches[1] );
-
-			$data = array(
-				'data'       => $count,
-				'expiration' => time() + $this->expiration,
-			);
-
-			update_post_meta( $this->post->ID, '_changeset_count', $data );
-
-			return $data;
+		if ( is_wp_error( $results ) ) {
+			return false;
 		}
 
-		return false;
+		$pattern = '/<meta name="totalResults" content="(\d*)" \/>/';
+
+		preg_match( $pattern, $results, $matches );
+
+		$count = intval( $matches[1] );
+
+		$data = array(
+			'data'       => $count,
+			'expiration' => time() + $this->expiration,
+		);
+
+		update_post_meta( $this->post->ID, '_changeset_count', $data );
+
+		return $data;
 
 	}
 
