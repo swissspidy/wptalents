@@ -112,9 +112,9 @@ class Person implements Type {
 
 	public function register_taxonomy() {
 
-		if ( taxonomy_exists( 'region', 'person' ) ) {
+		if ( taxonomy_exists( 'region' ) ) {
 
-			register_taxonomy_for_object_type( 'region', 'person' );
+			register_taxonomy_for_object_type( 'region', $this->post_type );
 
 		} else {
 
@@ -129,13 +129,13 @@ class Person implements Type {
 				'rewrite'               => false,
 			);
 
-			register_taxonomy( 'region', array( 'company', 'person' ), $region_args );
+			register_taxonomy( 'region', $this->post_type, $region_args );
 
 		}
 
 		if ( taxonomy_exists( 'service' ) ) {
 
-			register_taxonomy_for_object_type( 'service', 'person' );
+			register_taxonomy_for_object_type( 'service', $this->post_type );
 
 		} else {
 
@@ -150,7 +150,7 @@ class Person implements Type {
 				'rewrite'               => false,
 			);
 
-			register_taxonomy( 'service', 'person', $region_args );
+			register_taxonomy( 'service', $this->post_type, $region_args );
 
 		}
 
