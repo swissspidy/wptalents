@@ -45,6 +45,10 @@ class Profile_Collector extends Collector {
 
 		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
+		if ( '' === $body ) {
+			return false;
+		}
+
 		$dom = new DOMDocument();
 
 		libxml_use_internal_errors( true );
