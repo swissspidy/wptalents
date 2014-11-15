@@ -131,6 +131,11 @@ class Helper {
 
 				return $collector->get_data();
 				break;
+			case 'contributions':
+				$collector = new Contribution_Collector( $post );
+
+				return $collector->get_data();
+				break;
 			case 'social':
 				return self::get_social_links( $post );
 				break;
