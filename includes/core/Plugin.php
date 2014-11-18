@@ -199,9 +199,12 @@ class Plugin {
 			'from'            => 'product',
 			'to'              => array( 'person', 'company' ),
 			'cardinality'     => 'many-to-many',
-			'title'           => __( 'Owner', 'wptalents' ),
+			'title'           => array(
+				'from' => __( 'Owner', 'wptalents' ),
+				'to'   => __( 'Products', 'wptalents' )
+			),
 			'admin_box'       => array(
-				'show'    => 'from',
+				'show'    => 'any',
 				'context' => 'side',
 			),
 			'can_create_post' => false,
@@ -216,11 +219,10 @@ class Plugin {
 			'cardinality'     => 'many-to-many',
 			'title'           => __( 'Employees', 'wptalents' ),
 			'admin_box'       => array(
-				'show'    => 'from',
-				'context' => 'side',
+				'show'    => 'any',
+				'context' => 'advanced',
 			),
 			'fields'          => array(
-				// Todo: Add From-To dates so we can see past companies
 				'role' => array(
 					'title'   => __( 'Role', 'wptalents' ),
 					'values'  => array(
@@ -230,6 +232,16 @@ class Plugin {
 						'employee' => __( 'Employee', 'wptalents' )
 					),
 					'default' => 'employee',
+				),
+				'from' => array(
+					'title'   => __( 'From', 'wptalents' ),
+					'type'    => 'date',
+					'default' => '',
+				),
+				'to'   => array(
+					'title'   => __( 'To', 'wptalents' ),
+					'type'    => 'date',
+					'default' => '',
 				),
 			),
 			'can_create_post' => false,
@@ -242,7 +254,10 @@ class Plugin {
 			'from'            => 'company',
 			'to'              => 'job',
 			'cardinality'     => 'one-to-many',
-			'title'           => __( 'Open Jobs', 'wptalents' ),
+			'title'           => array(
+				'from' => __( 'Open Jobs', 'wptalents' ),
+				'to'   => __( 'Company', 'wptalents' ),
+			),
 			'admin_box'       => array(
 				'show'    => 'from',
 				'context' => 'side',
@@ -303,8 +318,12 @@ class Plugin {
 	}
 
 	/**
-	 * Fetches the map of the talent's location and sets it
-	 * as the post thumbnail.
+	 * Fetches the map of the talent's location from Google Maps
+	 * and sets it as the post thumbnail.
+	 *
+	 * It also replaces all intermediate image sizes with
+	 * the file from Google Maps, as they are from better quality
+	 * and way smaller than the generated ones.
 	 *
 	 * @param int $post_id The ID of the current post.
 	 */
@@ -326,36 +345,127 @@ class Plugin {
 			return;
 		}
 
-		$map_url = sprintf(
+		$map_retina = sprintf(
 			'https://maps.googleapis.com/maps/api/staticmap?center=%s&scale=2&zoom=6&size=600x320&maptype=roadmap',
 			urlencode( $location['name'] )
 		);
 
-		$tmp = download_url( $map_url );
+		$tmp_retina = download_url( $map_retina );
 
 		// Set variables for storage
 		$file_array = array(
 			'name'     => get_post( $post_id )->post_name . '-map.png',
-			'tmp_name' => $tmp,
+			'tmp_name' => $tmp_retina,
 		);
 
 		// If error storing temporarily, unlink
-		if ( is_wp_error( $tmp ) ) {
-			@unlink( $file_array['tmp_name'] );
-			$file_array['tmp_name'] = '';
+		if ( is_wp_error( $tmp_retina ) ) {
+			unlink( $file_array['tmp_name'] );
+
+			return;
 		}
 
 		// do the validation and storage stuff
-		$id = media_handle_sideload( $file_array, $post_id );
+		$attachment_id = media_handle_sideload( $file_array, $post_id, $location['name'] );
 
 		// If error storing permanently, unlink
-		if ( is_wp_error( $id ) ) {
-			@unlink( $file_array['tmp_name'] );
+		if ( is_wp_error( $attachment_id ) ) {
+			unlink( $file_array['tmp_name'] );
+
+			return;
 		}
 
 		// Set map as post thumbnail
-		set_post_thumbnail( $post_id, $id );
+		set_post_thumbnail( $post_id, $attachment_id );
 
+		// Add Normal image as image size of the attachment
+
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+
+		$attachment_path = get_attached_file( $attachment_id );
+		$attachment_file = basename( $attachment_path );
+
+		foreach ( $this->get_image_sizes() as $size => $values ) {
+
+			$map = sprintf(
+				'https://maps.googleapis.com/maps/api/staticmap?center=%s&scale=1&zoom=6&size=%s&maptype=roadmap',
+				urlencode( $location['name'] ),
+				$values['width'] . 'x' . $values['height']
+			);
+
+			$tmp = download_url( $map );
+
+			// Set variables for storage
+			$file_array = array(
+				'name'     => $metadata['sizes'][ $size ]['file'],
+				'tmp_name' => $tmp,
+			);
+
+			// If error storing temporarily, unlink
+			if ( is_wp_error( $tmp ) ) {
+				unlink( $file_array['tmp_name'] );
+
+				continue;
+			}
+
+			$post = get_post( $attachment_id );
+
+			unlink( str_replace( $attachment_file, $metadata['sizes'][ $size ]['file'], $attachment_path ) );
+
+			$post = get_post( $post_id );
+			$time = $post->post_date;
+
+			$file = wp_handle_sideload( $file_array, array( 'test_form' => false ), $time );
+
+			if ( isset( $file['error'] ) ) {
+				unlink( $file_array['tmp_name'] );
+			}
+		}
+
+		die();
+
+	}
+
+	public function get_image_sizes( $size = '' ) {
+
+		global $_wp_additional_image_sizes;
+
+		$sizes                        = array();
+		$get_intermediate_image_sizes = get_intermediate_image_sizes();
+
+		// Create the full array with sizes and crop info
+		foreach ( $get_intermediate_image_sizes as $_size ) {
+
+			if ( in_array( $_size, array( 'thumbnail', 'medium', 'large' ) ) ) {
+
+				$sizes[ $_size ]['width']  = get_option( $_size . '_size_w' );
+				$sizes[ $_size ]['height'] = get_option( $_size . '_size_h' );
+				$sizes[ $_size ]['crop']   = (bool) get_option( $_size . '_crop' );
+
+			} elseif ( isset( $_wp_additional_image_sizes[ $_size ] ) ) {
+
+				$sizes[ $_size ] = array(
+					'width'  => $_wp_additional_image_sizes[ $_size ]['width'],
+					'height' => $_wp_additional_image_sizes[ $_size ]['height'],
+					'crop'   => $_wp_additional_image_sizes[ $_size ]['crop']
+				);
+
+			}
+
+		}
+
+		// Get only 1 size if found
+		if ( $size ) {
+
+			if ( isset( $sizes[ $size ] ) ) {
+				return $sizes[ $size ];
+			} else {
+				return false;
+			}
+
+		}
+
+		return $sizes;
 	}
 
 	/**
