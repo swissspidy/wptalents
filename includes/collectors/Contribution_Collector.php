@@ -1,6 +1,7 @@
 <?php
 
 namespace WPTalents\Collector;
+
 use \WP_Post;
 
 /**
@@ -40,22 +41,13 @@ class Contribution_Collector extends Collector {
 
 		global $wp_version;
 
-		$version = number_format( $wp_version, 1, '.', '' );
-
 		$contributions = array();
-		while ( $version ) {
-			$version = number_format( $version, 1, '.', '' );
 
+		foreach ( range( 3.2, $wp_version, 0.1 ) as $version ) {
 			$role = $this->_loop_wp_version( $version, $this->options['username'] );
 
-			if ( false !== $role ) {
-				if ( $role ) {
-					$contributions[ $version ] = $role;
-				}
-
-				$version -= 0.1;
-			} else {
-				$version = false;
+			if ( $role ) {
+				$contributions[ $version ] = $role;
 			}
 		}
 
