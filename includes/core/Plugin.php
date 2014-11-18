@@ -408,8 +408,6 @@ class Plugin {
 				continue;
 			}
 
-			$post = get_post( $attachment_id );
-
 			unlink( str_replace( $attachment_file, $metadata['sizes'][ $size ]['file'], $attachment_path ) );
 
 			$post = get_post( $post_id );
