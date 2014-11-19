@@ -418,8 +418,6 @@ class Plugin {
 			}
 		}
 
-		die();
-
 	}
 
 	public function get_image_sizes( $size = '' ) {
