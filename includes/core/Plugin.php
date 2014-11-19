@@ -360,8 +360,6 @@ class Plugin {
 
 		// If error storing temporarily, unlink
 		if ( is_wp_error( $tmp_retina ) ) {
-			unlink( $file_array['tmp_name'] );
-
 			return;
 		}
 
