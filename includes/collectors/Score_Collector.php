@@ -59,11 +59,14 @@ class Score_Collector extends Collector {
 		$score += $this->_calculate_badge_score( $talent_meta['profile']['badges'] );
 
 		// Adjust score based on number of core contributions
-		$score += $this->_calculate_contribution_score(
-			$talent_meta['contributions'],
-			$talent_meta['codex_count'],
-			$talent_meta['contribution_count']
-		);
+
+		if ( isset( $talent_meta['contribution_count'] ) ) {
+			$score += $this->_calculate_contribution_score(
+				$talent_meta['contributions'],
+				$talent_meta['codex_count'],
+				$talent_meta['contribution_count']
+			);
+		}
 
 		// Adjust score based on number of WordPress.tv videos
 		$score += $this->_calculate_wordpresstv_score( $talent_meta['wordpresstv'] );
@@ -100,6 +103,10 @@ class Score_Collector extends Collector {
 	public function _calculate_plugin_score( $plugins ) {
 
 		$score = 0;
+
+		if ( 1 > count( $plugins ) ) {
+			return $score;
+		}
 
 		// Store the download counts in this array
 		$total_downloads = array();
@@ -156,6 +163,10 @@ class Score_Collector extends Collector {
 	public function _calculate_theme_score( $themes ) {
 
 		$score = 0;
+
+		if ( 1 > count( $themes ) ) {
+			return $score;
+		}
 
 		// Store the download counts in this array
 		$total_downloads = array();
