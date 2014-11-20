@@ -20,25 +20,6 @@ class Product implements Type {
 
 	}
 
-	/**
-	 * @param $query_vars
-	 *
-	 * @return mixed
-	 */
-	public function filter_request( $query_vars ) {
-
-		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
-			// Single Product
-
-			$query_vars['post_type'] = $this->post_type;
-			$query_vars['name']      = $query_vars['talent'];
-
-		}
-
-		return $query_vars;
-
-	}
-
 	public function register_post_type() {
 
 		$args = array(

@@ -41,55 +41,43 @@ class Router {
 	/**
 	 * Filters the current request to modify query vars.
 	 *
+	 * @todo Make this more flexible by using the types registered in the plugin.
+	 *
 	 * @param array $query_vars
 	 *
 	 * @return array $query_vars
 	 */
 	public static function filter_request( $query_vars ) {
 
-		if ( is_admin() ) {
-			return $query_vars;
-		}
-
-		$original_query_vars = $query_vars;
-
-		if ( ! isset( $query_vars['talent'] ) ) {
+		if ( is_admin() || ! isset( $query_vars['talent'] ) ) {
 			return $query_vars;
 		}
 
 		if ( 'talents' === $query_vars['talent'] ) {
-			// Talents Archive
+			// Talents Archive, return early
 
 			$query_vars['post_type'] = 'company';
+
+			unset( $query_vars['talent'] );
+
+			return $query_vars;
 		}
 
-		$query_vars = apply_filters( 'wptalents_filter_request', $query_vars );
+		$query_vars['name'] = $query_vars['talent'];
 
-		// Query vars haven't been modified
-		if ( $query_vars === $original_query_vars ) {
+		$post = Helper::post_exists( $query_vars['talent'], array( 'company', 'person', 'page', 'post' ) );
 
-			if ( Helper::post_exists( $query_vars['talent'], 'page' ) ) {
+		if ( null === $post ) {
+			// Fallback
+			$query_vars['post_type'] = 'post';
 
-				// Page
+		} else {
+			$query_vars['post_type'] = $post->post_type;
 
-				$query_vars['post_type'] = 'page';
-
-				// Hierarchical post types will operate through 'pagename'.
-				$query_vars['pagename']      = $query_vars['talent'];
-
-			} else {
-
-				// Single Post
-
-				$query_vars['post_type'] = 'post';
-
-				// Non-hierarchical post types can directly use 'name'.
-				$query_vars['name']      = $query_vars['talent'];
-
+			if ( 'page' === $post->post_type ) {
+				$query_vars['pagename'] = $query_vars['talent'];
+				unset( $query_vars['name'] );
 			}
-
-			// Only one request for a slug is possible, this is why name & pagename are overwritten by WP_Query.
-
 		}
 
 		// Unset the unused query var
@@ -131,8 +119,8 @@ class Router {
 
 		if ( is_post_type_archive( 'company' ) ) {
 			$query->set( 'post_type', $post_types );
-			$query->set( 'orderby',   'name' );
-			$query->set( 'order',     'ASC' );
+			$query->set( 'orderby', 'name' );
+			$query->set( 'order', 'ASC' );
 		}
 
 	}

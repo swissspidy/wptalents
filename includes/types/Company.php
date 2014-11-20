@@ -29,25 +29,6 @@ class Company implements Type {
 	}
 
 	/**
-	 * @param array $query_vars
-	 *
-	 * @return array
-	 */
-	public function filter_request( $query_vars ) {
-
-		if ( Helper::post_exists( $query_vars['talent'], $this->post_type ) ) {
-			// Single Person
-
-			$query_vars['post_type'] = $this->post_type;
-			$query_vars['name']      = $query_vars['talent'];
-
-		}
-
-		return $query_vars;
-
-	}
-
-	/**
 	 * @param array $post_types
 	 *
 	 * @return array

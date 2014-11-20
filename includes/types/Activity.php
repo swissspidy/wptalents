@@ -11,7 +11,6 @@ class Activity implements Type {
 
 	protected $post_type = 'activity';
 
-
 	/**
 	 * Initialize the constructor.
 	 */

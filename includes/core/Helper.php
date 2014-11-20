@@ -12,6 +12,7 @@ use WPTalents\Collector\Score_Collector;
 use WPTalents\Collector\Theme_Collector;
 use WPTalents\Collector\WordPressTv_Collector;
 use \WP_Post;
+use \wpdb;
 
 /**
  * Class Helper
@@ -52,33 +53,41 @@ class Helper {
 	/**
 	 * Determine if a post exists based on post_name (slug) and post_type.
 	 *
-	 * @param string $post_name The post slug.
-	 * @param string $post_type Post Type. Defaults to post
+	 * @param string       $post_name The post slug.
+	 * @param array|string $post_type Post Type. Defaults to post
 	 *
-	 * @return int The ID on success, 0 on failure.
+	 * @return object|null The resulting row on success, null on failure.
 	 */
 	public static function post_exists( $post_name, $post_type = 'post' ) {
 
-		/** @var $wpdb wpdb */
+		/** @var wpdb $wpdb */
 		global $wpdb;
 
-		$query = "SELECT ID FROM $wpdb->posts WHERE 1=1 AND post_status IN ( 'publish', 'draft' ) ";
+		$query = "SELECT ID, post_type FROM $wpdb->posts WHERE 1=1 AND post_status IN ( 'publish', 'draft' ) ";
 		$args  = array();
 
 		if ( ! empty( $post_name ) ) {
-			$query .= " AND post_name LIKE '%s' ";
+			$query .= ' AND post_name LIKE \'%s\' ';
 			$args[] = $post_name;
 		}
 		if ( ! empty( $post_type ) ) {
-			$query .= " AND post_type = '%s' ";
-			$args[] = $post_type;
+			$post_type_in = implode( ', ', array_fill( 0, count( (array) $post_type ), '%s' ) );
+
+			$query .= " AND post_type IN ( $post_type_in )";
+			foreach ( (array) $post_type as $type ) {
+				$args[] = $type;
+			}
 		}
 
-		if ( ! empty( $args ) && null !== $wpdb->get_var( $wpdb->prepare( $query, $args ) ) ) {
-			return true;
+		$query .= ' LIMIT 1';
+
+		$result = $wpdb->get_row( $wpdb->prepare( $query, $args ) );
+
+		if ( null === $result ) {
+			return false;
 		}
 
-		return false;
+		return $result;
 
 	}
 
@@ -208,18 +217,18 @@ class Helper {
 
 		$profile = self::get_talent_meta( $post, 'profile' );
 
-		if ( ! $profile ) {
-			return false;
+		if ( ! isset( $profile['avatar'] ) ) {
+			$profile['avatar'] = 'https://secure.gravatar.com/avatar/';
 		}
 
 		// Add size parameter
-		$avatar = add_query_arg( array( 's' => $size, 'd' => 'mm' ), $profile['avatar'] );
+		$avatar = add_query_arg( array( 's' => absint( $size ), 'd' => 'mm' ), $profile['avatar'] );
 
 		return sprintf(
 			'<img src="%1$s" alt="%2$s" width="%3$d" height="%3$d" />',
 			esc_url( $avatar ),
 			esc_attr( get_the_title( $post ) ),
-			$size
+			absint( $size )
 		);
 
 	}
