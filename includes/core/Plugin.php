@@ -64,7 +64,7 @@ class Plugin {
 
 		// FacetWP
 
-		add_filter( 'facetwp_sort_options', array( __CLASS__, 'facetwp_sort_options' ), 10 );
+		add_filter( 'facetwp_sort_options', array( __CLASS__, 'facetwp_sort_options' ) );
 
 		add_filter( 'facetwp_pager_html', array( __CLASS__, 'facetwp_pager_html' ), 10, 2 );
 
