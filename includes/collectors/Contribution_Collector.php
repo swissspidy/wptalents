@@ -109,20 +109,15 @@ class Contribution_Collector extends Collector {
 	 */
 	protected function _get_credits( $wp_version, $locale = '' ) {
 
-		// We can't request data before this.
-		if ( version_compare( $wp_version, '3.2', '<' ) ) {
-			return false;
-		}
-
 		$response = wp_remote_retrieve_body( wp_safe_remote_get(
-			'http://api.wordpress.org/core/credits/1.1/?version=' . $wp_version . '&locale=' . $locale
+			'https://api.wordpress.org/core/credits/1.1/?version=' . $wp_version . '&locale=' . $locale
 		) );
 
 		if ( '' === $response ) {
 			return false;
 		}
 
-		$results = json_decode( wp_remote_retrieve_body( $response ), true );
+		$results = json_decode( $response, true );
 
 		if ( ! is_array( $results ) || $results['data']['version'] != (string) $wp_version ) {
 			return false;
