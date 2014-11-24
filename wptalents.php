@@ -15,7 +15,7 @@
  * Version:           0.0.1
  * Author:            Pascal Birchler
  * Author URI:        https://spinpress.com
- * Text Domain:       wptalents-base
+ * Text Domain:       wptalents
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Domain Path:       /languages
