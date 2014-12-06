@@ -204,7 +204,7 @@ class Helper {
 	}
 
 	/**
-	 * Get the avatar of a talent.
+	 * Get the avatar URL of a talent.
 	 *
 	 * @param \WP_Post|int $post The post object or ID.
 	 *
@@ -213,7 +213,7 @@ class Helper {
 	 * @return mixed            The avatar URL on success,
 	 *                          false if the post does not exist.
 	 */
-	public static function get_avatar( WP_Post $post, $size = 144 ) {
+	public static function get_avatar_url( WP_Post $post, $size ) {
 
 		$profile = self::get_talent_meta( $post, 'profile' );
 
@@ -223,6 +223,24 @@ class Helper {
 
 		// Add size parameter
 		$avatar = add_query_arg( array( 's' => absint( $size ), 'd' => 'mm' ), $profile['avatar'] );
+
+		return esc_url( $avatar );
+
+	}
+
+	/**
+	 * Get the avatar of a talent.
+	 *
+	 * @param \WP_Post|int $post The post object or ID.
+	 *
+	 * @param int          $size
+	 *
+	 * @return mixed            The avatar img tag on success,
+	 *                          false if the post does not exist.
+	 */
+	public static function get_avatar( WP_Post $post, $size = 144 ) {
+
+		$avatar = self::get_avatar_url( $post, $size );
 
 		return sprintf(
 			'<img src="%1$s" alt="%2$s" width="%3$d" height="%3$d" />',
