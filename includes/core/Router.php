@@ -17,6 +17,8 @@ class Router {
 
 		add_filter( 'request', array( $this, 'filter_request' ) );
 
+		add_filter( 'template_redirect', array( $this, 'template_redirect' ) );
+
 		add_filter( 'template_include', array( $this, 'template_include' ) );
 
 		add_action( 'pre_get_posts', array( $this, 'pre_get_posts' ) );
@@ -53,6 +55,7 @@ class Router {
 			return $query_vars;
 		}
 
+
 		if ( 'talents' === $query_vars['talent'] ) {
 			// Talents Archive, return early
 
@@ -87,6 +90,22 @@ class Router {
 
 	}
 
+	public function template_redirect() {
+
+		global $wp_query, $post;
+
+		if ( ! isset( $wp_query->query_vars['embed'] ) || ! in_array(
+				$wp_query->query_vars['post_type'],
+				array( 'company', 'person', 'product' ) )
+		) {
+			return;
+		}
+
+		do_action( 'wptalents_oembed_output', $post );
+		exit;
+
+	}
+
 	/**
 	 * Filter the path of the current template before including it.
 	 *
@@ -94,7 +113,7 @@ class Router {
 	 *
 	 * @return string The template to include.
 	 */
-	public static function template_include( $template ) {
+	public function template_include( $template ) {
 
 		$post_types = array_filter( (array) get_query_var( 'post_type' ) );
 

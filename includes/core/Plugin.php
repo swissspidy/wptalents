@@ -9,6 +9,7 @@ use WPTalents\Types\Person;
 use WPTalents\Types\Product;
 use WPTalents\API\Talents;
 use WPTalents\API\Products;
+use WPTalents\API\Oembed_Provider;
 use \WP_JSON_ResponseHandler;
 
 /**
@@ -74,6 +75,8 @@ class Plugin {
 
 		add_action( 'wp_json_server_before_serve', array( __CLASS__, 'api_init' ) );
 
+		add_action( 'wp_head', array( $this, 'add_oembed_links' ) );
+
 	}
 
 	/**
@@ -82,6 +85,9 @@ class Plugin {
 	public function add_rewrite_rules() {
 
 		add_rewrite_rule( '([^/]+)?/?$', 'index.php?talent=$matches[1]', 'top' );
+		add_rewrite_rule( '([^/]+)?/embed(/(.*))?/?$', 'index.php?talent=$matches[1]&embed=$matches[2]', 'top' );
+
+		add_rewrite_endpoint( 'embed', EP_PERMALINK );
 
 	}
 
@@ -313,6 +319,17 @@ class Plugin {
 		/** @var $type WP_Talents_Type */
 		foreach ( $this->types as $type ) {
 			add_filter( 'post_class', array( $type, 'filter_post_class' ) );
+		}
+
+	}
+
+	/**
+	 * Add oEmbed discovery links to single talent & product pages
+	 */
+	public function add_oembed_links() {
+
+		if ( is_singular( array( 'company', 'person', 'product' ) ) ) {
+			echo '<link rel="alternate" type="application/json+oembed" href="' . esc_url( get_json_url( null, 'oembed/?url=' . get_permalink() ) ) . '" />' . "\n";
 		}
 
 	}
@@ -577,6 +594,7 @@ class Plugin {
 
 		new Talents( $server );
 		new Products( $server );
+		new Oembed_Provider( $server );
 
 	}
 

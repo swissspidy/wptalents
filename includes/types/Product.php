@@ -29,7 +29,7 @@ class Product implements Type {
 			'show_in_menu'  => true,
 			'query_var'     => true,
 			'rewrite'       => array(
-				'slug' => $this->post_type,
+				'slug'       => $this->post_type,
 			),
 			'has_archive'   => true,
 			'hierarchical'  => false,
@@ -142,7 +142,7 @@ class Product implements Type {
 		// Add default classes
 		$classes[] = 'talent';
 
-		if ( $post !== get_queried_object() ) {
+		if ( $post !== get_queried_object() || wptalents_is_oembed() ) {
 			$classes[] = 'talent--small';
 		}
 

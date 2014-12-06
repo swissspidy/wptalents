@@ -41,3 +41,7 @@ function wptalents_get_attachment_url( $attachment, $size = 'full' ) {
 function wptalents_get_talent_meta( $post = null, $type = 'all' ) {
 	return Helper::get_talent_meta( get_post( $post ), $type );
 }
+
+function wptalents_is_oembed() {
+	return did_action( 'wptalents_oembed_output' ) || doing_action( 'wptalents_oembed_output' );
+}
