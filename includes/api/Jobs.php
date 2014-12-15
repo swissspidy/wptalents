@@ -12,24 +12,24 @@ use \WP_JSON_Response;
 use \WP_JSON_CustomPostType;
 
 /**
- * Class Talents
+ * Class Products
  * @package WPTalents\API
  */
-class Talents extends WP_JSON_CustomPostType {
+class Jobs extends WP_JSON_CustomPostType {
 
 	/**
 	 * Base route name.
 	 *
 	 * @var string Route base (e.g. /my-plugin/my-type)
 	 */
-	protected $base = '/talents';
+	protected $base = '/jobs';
 
 	/**
 	 * Associated post types.
 	 *
 	 * @var array Type slug
 	 */
-	protected $type = array( 'company', 'person' );
+	protected $type = 'job';
 
 	/**
 	 * Construct the API handler object.
@@ -38,7 +38,7 @@ class Talents extends WP_JSON_CustomPostType {
 	 */
 	public function __construct( WP_JSON_Server $server ) {
 
-		add_filter( 'json_endpoints', array( $this, 'register_routes' ) );
+		add_filter( 'json_endpoints',  array( $this, 'register_routes' ) );
 
 		parent::__construct( $server );
 
@@ -48,7 +48,6 @@ class Talents extends WP_JSON_CustomPostType {
 	 * Register the routes for the talents
 	 *
 	 * @param array $routes Routes for the post type
-	 *
 	 * @return array Modified routes
 	 */
 	public function register_routes( $routes ) {
@@ -71,7 +70,7 @@ class Talents extends WP_JSON_CustomPostType {
 	 * @param null   $type
 	 * @param int    $page
 	 *
-	 * @return \WP_Error|array
+	 * @return WP_Error|array
 	 */
 	public function get_posts( $filter = array(), $context = 'view', $type = null, $page = 1 ) {
 		if ( ! empty( $type ) && $type !== $this->type ) {
@@ -101,7 +100,7 @@ class Talents extends WP_JSON_CustomPostType {
 		/** @var array $post */
 		$post = get_post( $id, ARRAY_A );
 
-		if ( ! in_array( $post['post_type'], $this->type ) ) {
+		if ( $this->type !== $post['post_type'] ) {
 			return new WP_Error( 'json_post_invalid_type', __( 'Invalid post type' ), array( 'status' => 400 ) );
 		}
 
@@ -111,7 +110,7 @@ class Talents extends WP_JSON_CustomPostType {
 
 		// Link headers (see RFC 5988)
 
-		$response = new WP_JSON_Response();
+		$response = new \WP_JSON_Response();
 		$response->header( 'Last-Modified', mysql2date( 'D, d M Y H:i:s', $post['post_modified_gmt'] ) . 'GMT' );
 
 		$post = $this->prepare_post( $post, $context );
@@ -151,9 +150,6 @@ class Talents extends WP_JSON_CustomPostType {
 		$GLOBALS['post'] = $post_obj;
 		setup_postdata( $post_obj );
 
-		// Fetch our talent meta
-		$talent_meta = Helper::get_talent_meta( $post_obj );
-
 		// Prepare common post fields
 		$post_fields = array(
 			'title' => get_the_title( $post['ID'] ), // $post['post_title'],
@@ -167,121 +163,27 @@ class Talents extends WP_JSON_CustomPostType {
 			'excerpt'       => $this->prepare_excerpt( $post['post_excerpt'] ),
 			'content'       => apply_filters( 'the_content', $post['post_content'] ),
 			'byline'        => esc_html( get_post_meta( $post['ID'], 'byline', true ) ),
-			'job'           => (string) get_post_meta( $post['ID'], 'job', true ),
-			'wordpress_vip' => ( 1 == get_post_meta( $post['ID'], 'wordpress_vip', true ) ) ? true : false,
-			'location'      => $talent_meta['map'],
-			'score'         => $talent_meta['score'],
-			'social'        => $talent_meta['social'],
-			'badges'        => $talent_meta['profile']['badges'],
-			'contributions' => array(
-				'codex' => array( 'count' => $talent_meta['codex_count'] ),
-				'props' => array( 'count' => $talent_meta['changeset_count'] ),
-				'core'  => $talent_meta['contributions'],
-			),
-			'plugins'       => $talent_meta['plugins'],
-			'themes'        => $talent_meta['themes'],
-			//'sticky' => ( $post['post_type'] === 'post' && is_sticky( $post['ID'] ) ),
 		);
 
-		// A person can't be a WordPress.com VIP
-		if ( 'person' === $post['post_type'] ) {
-			unset( $post_fields_extended['wordpress_vip'] );
-		}
-
-		if ( 'company' === $post['post_type'] ) {
-			// Company itself has no job
-			unset( $post_fields_extended['job'] );
-
-			// Find connected team members
-			$people = get_posts( array(
-				'connected_type'   => 'team',
-				'connected_items'  => $post,
-				'posts_per_page'   => - 1,
-				'suppress_filters' => false,
-			) );
-
-			/** @var \WP_Post $person */
-			foreach ( $people as $person ) {
-				// Fetch our talent meta
-				$person_meta = Helper::get_talent_meta( $person );
-
-				$post_fields_extended['team'][] = array(
-					'ID'       => absint( $person->ID ),
-					'title'    => get_the_title( $person->ID ),
-					'type'     => $person->post_type,
-					'link'     => get_permalink( $person->ID ),
-					'slug'     => $person->post_name,
-					'avatar'   => Helper::get_avatar_url( $person, 512 ),
-					'excerpt'  => $this->prepare_excerpt( $person->post_excerpt ),
-					'byline'   => esc_html( get_post_meta( $person->ID, 'byline', true ) ),
-					'job'      => (string) get_post_meta( $person->ID, 'job', true ),
-					'location' => $person_meta['map'],
-					'score'    => $person_meta['score'],
-					'meta'     => array(
-						'self'       => json_url( '/talents/' . $person->ID ),
-						'collection' => json_url( '/talents' ),
-					),
-				);
-			}
-		}
-
-		// Company itself has no job
-		unset( $post_fields_extended['job'] );
-
-		// Find connected team members
-		$products = get_posts( array(
-			'connected_type'   => 'product_owner',
-			'connected_items'  => $post,
-			'posts_per_page'   => - 1,
-			'suppress_filters' => false,
-		) );
-
-		/** @var \WP_Post $product */
-		foreach ( $products as $product ) {
-			$thumbnail = '';
-			if ( has_post_thumbnail( $product ) ) {
-				$image = wp_get_attachment_image_src( get_post_thumbnail_id( $product ), 'large' );
-				if ( $image ) {
-					$thumbnail = $image[0];
-				}
-			}
-			$post_fields_extended['products'][] = array(
-				'ID'       => absint( $product->ID ),
-				'title'    => get_the_title( $product->ID ),
-				'link'     => get_permalink( $product->ID ),
-				'slug'     => $product->post_name,
-				'image'    => $thumbnail,
-				'excerpt'  => $this->prepare_excerpt( $product->post_excerpt ),
-				'byline'   => esc_html( get_post_meta( $product->ID, 'byline', true ) ),
-				'meta'     => array(
-					'self'       => json_url( '/products/' . $product->ID ),
-					'collection' => json_url( '/products' ),
-				),
-			);
-		}
-
-		// Find connected jobs
-		$jobs = get_posts( array(
+		// Get connected company
+		$companies = get_posts( array(
 			'connected_type'   => 'hiring',
 			'connected_items'  => $post,
 			'posts_per_page'   => - 1,
 			'suppress_filters' => false,
 		) );
 
-		/** @var \WP_Post $job */
-		foreach ( $jobs as $job ) {
-			$post_fields_extended['jobs'][] = array(
-				'ID'       => absint( $job->ID ),
-				'title'    => get_the_title( $job->ID ),
-				'link'     => get_permalink( $job->ID ),
-				'slug'     => $job->post_name,
-				'excerpt'  => $this->prepare_excerpt( $job->post_excerpt ),
-				'meta'     => array(
-					'self'       => json_url( '/jobs/' . $job->ID ),
-					'collection' => json_url( '/jobs' ),
-				),
-			);
-		}
+		$post_fields_extended['company'] = array(
+			'ID'       => absint( $companies[0]->ID ),
+			'title'    => get_the_title( $companies[0]->ID ),
+			'link'     => get_permalink( $companies[0]->ID ),
+			'slug'     => $companies[0]->post_name,
+			'excerpt'  => $this->prepare_excerpt( $companies[0]->post_excerpt ),
+			'meta'     => array(
+				'self'       => json_url( '/talents/' . $companies[0]->ID ),
+				'collection' => json_url( '/talents' ),
+			),
+		);
 
 		// Dates
 		if ( '0000-00-00 00:00:00' === $post['post_date_gmt'] ) {
@@ -308,8 +210,8 @@ class Talents extends WP_JSON_CustomPostType {
 
 		// Entity meta
 		$links = array(
-			'self'       => json_url( '/talents/' . $post['ID'] ),
-			'collection' => json_url( '/talents' ),
+			'self'       => json_url( '/jobs/' . $post['ID'] ),
+			'collection' => json_url( '/jobs' ),
 		);
 
 		$_post['meta'] = array( 'links' => $links );

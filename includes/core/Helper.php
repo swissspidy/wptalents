@@ -208,17 +208,19 @@ class Helper {
 	 *
 	 * @param \WP_Post|int $post The post object or ID.
 	 *
-	 * @param int          $size
+	 * @param int          $size Size of the avatar image.
 	 *
-	 * @return mixed            The avatar URL on success,
-	 *                          false if the post does not exist.
+	 * @return string The avatar URL.
 	 */
-	public static function get_avatar_url( WP_Post $post, $size ) {
+	public static function get_avatar_url( $post, $size ) {
+
+		/** @var \WP_Post $post */
+		$post = get_post( $post );
 
 		$profile = self::get_talent_meta( $post, 'profile' );
 
 		if ( ! isset( $profile['avatar'] ) ) {
-			$profile['avatar'] = 'https://secure.gravatar.com/avatar/';
+			$profile = array( 'avatar' => 'https://secure.gravatar.com/avatar/' );
 		}
 
 		// Add size parameter
@@ -334,44 +336,26 @@ class Helper {
 	 */
 	public static function get_map_data( WP_Post $post ) {
 
-		$all_locations = array();
-
 		$location = self::get_talent_meta( $post, 'location' );
 
-		if ( empty( $location['lat'] ) || empty( $location['long'] ) ) {
+		if ( empty( $location['lat'] ) || empty( $location['long'] ) || empty( $location['name'] ) ) {
 			return false;
 		}
 
-		$all_locations[] = array(
-			'id'    => $post->ID,
-			'title' => $post->post_title,
-			'name'  => $location['name'],
-			'lat'   => $location['lat'],
-			'long'  => $location['long'],
-		);
-
-		if ( 'company' === $post->post_type ) {
-			// Find connected posts
-			$people = get_posts( array(
-				'connected_type'   => 'team',
-				'connected_items'  => $post,
-				'posts_per_page'   => - 1,
-				'suppress_filters' => false,
-			) );
-
-			/** @var \WP_Post $person */
-			foreach ( $people as $person ) {
-
-				if ( ! $person_location = self::get_map_data( $person ) ) {
-					continue;
-				}
-
-				$all_locations = array_merge( $all_locations, $person_location );
-
+		$thumbnail = '';
+		if ( has_post_thumbnail( $post->ID ) ) {
+			$image = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'full' );
+			if ( $image ) {
+				$thumbnail = $image[0];
 			}
 		}
 
-		return $all_locations;
+		return array(
+			'name'  => $location['name'],
+			'lat'   => $location['lat'],
+			'long'  => $location['long'],
+			'image' => $thumbnail,
+		);
 
 	}
 
@@ -404,6 +388,7 @@ class Helper {
 	 * with WP Talents' permalink structure.
 	 *
 	 * @param string $url Permalink to check.
+	 *
 	 * @return int Post ID, or 0 on failure.
 	 */
 	public static function url_to_postid( $url ) {

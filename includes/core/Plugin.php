@@ -9,8 +9,8 @@ use WPTalents\Types\Person;
 use WPTalents\Types\Product;
 use WPTalents\API\Talents;
 use WPTalents\API\Products;
+use WPTalents\API\Jobs;
 use WPTalents\API\Oembed_Provider;
-use \WP_JSON_ResponseHandler;
 
 /**
  * Class Plugin
@@ -588,12 +588,13 @@ class Plugin {
 	/**
 	 * Initialize our API endpoint.
 	 *
-	 * @param WP_JSON_ResponseHandler $server
+	 * @param \WP_JSON_Server $server
 	 */
-	public static function api_init( WP_JSON_ResponseHandler $server ) {
+	public static function api_init( \WP_JSON_Server $server ) {
 
 		new Talents( $server );
 		new Products( $server );
+		new Jobs( $server );
 		new Oembed_Provider( $server );
 
 	}
