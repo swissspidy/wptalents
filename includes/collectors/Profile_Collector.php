@@ -59,7 +59,7 @@ class Profile_Collector extends Collector {
 
 		$name         = $finder->query( '//h2[@class="fn"]' );
 		$avatar       = $finder->query( '//div[@id="meta-status-badge-container"]/a/img' );
-		$description  = $finder->query( '//div[@id="item-meta-about"]' );
+		$description  = $finder->query( '//div[@class="item-meta-about"]' );
 		$location     = $finder->query( '//li[@id="user-location"]' );
 		$member_since = $finder->query( '//li[@id="user-member-since"]' );
 		$website      = $finder->query( '//li[@id="user-website"]/a' );
@@ -82,7 +82,7 @@ class Profile_Collector extends Collector {
 		$data['member_since'] = $date->format( 'Y-m-d' );
 
 		if ( $description->length ) {
-			$description = $description->nodeValue;
+			$description = trim( $description->item( 0 )->nodeValue );
 		} else {
 			$description = '';
 		}
@@ -124,7 +124,7 @@ class Profile_Collector extends Collector {
 			}
 		}
 
-		if ( empty( $this->post->post_content ) && ! empty( $description ) ) {
+		if ( '' === $this->post->post_content ) {
 			$this->post->post_content = $description;
 		}
 
