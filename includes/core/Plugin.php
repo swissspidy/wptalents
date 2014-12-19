@@ -369,9 +369,15 @@ class Plugin {
 
 		$tmp_retina = download_url( $map_retina );
 
+		$slug = get_post( $post_id )->post_name;
+
+		if ( '' === $slug ) {
+			$slug = sanitize_title( get_the_title( $post_id ) );
+		}
+
 		// Set variables for storage
 		$file_array = array(
-			'name'     => get_post( $post_id )->post_name . '-map.png',
+			'name'     => $slug . '-map.png',
 			'tmp_name' => $tmp_retina,
 		);
 
