@@ -37,7 +37,7 @@ class Contribution_Collector extends Collector {
 	 *
 	 * @return bool
 	 */
-	protected function _retrieve_data() {
+	public function _retrieve_data() {
 
 		global $wp_version;
 

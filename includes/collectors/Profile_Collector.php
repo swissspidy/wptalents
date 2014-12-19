@@ -21,8 +21,8 @@ class Profile_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_profile', true );
 
 		if ( ( ! $data ||
-			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-			&& $this->options['may_renew']
+		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		     && $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -59,6 +59,7 @@ class Profile_Collector extends Collector {
 
 		$name         = $finder->query( '//h2[@class="fn"]' );
 		$avatar       = $finder->query( '//div[@id="meta-status-badge-container"]/a/img' );
+		$description  = $finder->query( '//div[@id="item-meta-about"]' );
 		$location     = $finder->query( '//li[@id="user-location"]' );
 		$member_since = $finder->query( '//li[@id="user-member-since"]' );
 		$website      = $finder->query( '//li[@id="user-website"]/a' );
@@ -68,7 +69,7 @@ class Profile_Collector extends Collector {
 		$data = array(
 			'name'         => trim( $name->item( 0 )->nodeValue ),
 			'avatar'       => strtok( $avatar->item( 0 )->getAttribute( 'src' ), '?' ),
-			'location'     => trim( $location->item( 0 )->nodeValue ),
+			'location'     => '',
 			'company'      => '',
 			'member_since' => '',
 			'website'      => '',
@@ -80,6 +81,16 @@ class Profile_Collector extends Collector {
 		$date                 = new DateTime( $matches[0] );
 		$data['member_since'] = $date->format( 'Y-m-d' );
 
+		if ( $description->length ) {
+			$description = $description->nodeValue;
+		} else {
+			$description = '';
+		}
+
+		if ( $location->length ) {
+			$data['location'] = trim( $location->item( 0 )->nodeValue );
+		}
+
 		if ( $company->length ) {
 			$data['company'] = trim( preg_replace( '/\t+/', '', $company->item( 0 )->nodeValue ) );
 		}
@@ -90,6 +101,39 @@ class Profile_Collector extends Collector {
 
 		foreach ( $badges as $badge ) {
 			$data['badges'][] = $badge->getAttribute( 'title' );
+		}
+
+		$location = get_post_meta( $this->post->ID, 'location' );
+
+		if ( empty( $location ) ) {
+			update_post_meta( $this->post->ID, 'location', $data['location'] );
+		}
+
+		$social = (array) get_post_meta( $this->post->ID, 'social' );
+
+		if ( ! isset( $social['url'] ) && isset( $data['website'] ) ) {
+			$social['url'] = $data['website'];
+			update_post_meta( $this->post->ID, 'social', $social );
+		}
+
+		if ( $this->post->post_title === $this->options['username'] && ! empty( $data['name'] ) ) {
+			$this->post->post_title = (string) $data['name'];
+
+			if ( empty( $this->post->post_name ) ) {
+				$this->post->post_name = sanitize_title( $this->post->post_title );
+			}
+		}
+
+		if ( empty( $this->post->post_content ) && ! empty( $description ) ) {
+			$this->post->post_content = $description;
+		}
+
+		wp_update_post( $this->post );
+
+		if ( ! empty( $data['company'] ) && 'person' === $this->post->post_type )  {
+			if ( '' === get_post_meta( $this->post->ID, 'job', true ) ) {
+				update_post_meta( $this->post->ID, 'job', $data['company'] );
+			}
 		}
 
 		$data = array(

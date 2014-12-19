@@ -28,6 +28,15 @@ defined( 'ABSPATH' ) or die();
 ( ! defined( 'WP_TALENTS_DIR' ) ) && define( 'WP_TALENTS_DIR', plugin_dir_path( __FILE__ ) );
 ( ! defined( 'WP_TALENTS_URL' ) ) && define( 'WP_TALENTS_URL', plugins_url( '', __FILE__ ) );
 
+if ( file_exists( WP_TALENTS_DIR . 'vendor/autoload.php' ) ) {
+	require_once( WP_TALENTS_DIR . 'vendor/autoload.php' );
+}
+
+// WP-CLI Command
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	include( WP_TALENTS_DIR . 'includes/cli/Talent_Command.php' );
+}
+
 /**
  * Register hooks that are fired when the plugin is activated or deactivated.
  * When the plugin is deleted, the uninstall.php file is loaded.

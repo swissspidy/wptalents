@@ -30,6 +30,7 @@
   "autoload"    : {
     "psr-4": {
       "WPTalents\\API\\"      : "includes/api",
+      "WPTalents\\CLI\\"      : "includes/cli",
       "WPTalents\\CMB\\"      : "includes/cmb",
       "WPTalents\\Collector\\": "includes/collectors",
       "WPTalents\\Core\\"     : "includes/core",
