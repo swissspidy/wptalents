@@ -42,7 +42,7 @@ class WordPressTv_Collector extends Collector {
 	 */
 	public function _retrieve_data() {
 
-		$url = trailingslashit( 'http://wordpress.tv/speakers/' . $this->post->post_name );
+		$url = trailingslashit( 'https://wordpress.tv/speakers/' . $this->post->post_name );
 
 		$data = $this->_retrieve_videos( $url );
 
@@ -98,6 +98,8 @@ class WordPressTv_Collector extends Collector {
 
 			$description = $finder->query( '*[contains(@class, "video-description")]/*[contains(@class, "video-excerpt")]/p', $video )->item( 0 )->nodeValue;
 			preg_match( '/^((?:\S+\s+){2}\S+).*/', $description, $matches );
+
+			$description = str_replace( '&#8212', '–', $description );
 
 			$date = new DateTime( $matches[1] );
 
