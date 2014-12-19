@@ -11,6 +11,9 @@ namespace WPTalents\CLI;
 use WPTalents\Core\Importer;
 use \WP_CLI;
 
+/**
+ * Import and update WordPress talents.
+ */
 class Talent_Command extends \WP_CLI_Command {
 
 	/**
@@ -18,27 +21,50 @@ class Talent_Command extends \WP_CLI_Command {
 	 *
 	 * ## OPTIONS
 	 *
-	 * <username>
-	 * : The talent's WordPress.org username
+	 * <username>...
+	 * : One or more WordPress.org usernames to import.
+	 *
+	 * [--name]
+	 * : Overwrite the talent's full name (only works when importing 1 talent).
+	 *
+	 * [--type]
+	 * : The talent type (person or company).
 	 *
 	 * ## EXAMPLES
 	 *
 	 * wp talent add johndoe --name=John Doe --type=person
-	 * wp talent add automattic --name=Automattic --type=company
-	 *
-	 * @synopsis <username> [--name=<username>] [--type=<person>]
+	 * wp talent add johndoe janedoe
 	 */
-	function add( $args, $assoc_args ) {
-		list( $username ) = $args;
-
+	public function add( $args, $assoc_args ) {
 		$defaults = array(
 			'type' => 'person',
-			'name' => $username,
+			'name' => '',
 		);
 
 		$assoc_args = wp_parse_args( $assoc_args, $defaults );
 
-		$importer = new Importer( $username, $assoc_args['name'], $assoc_args['type'] );
+		// Only person and company are allowed values
+		if ( 'person' !== $assoc_args['type'] ) {
+			$assoc_args['type'] = 'company';
+		}
+
+		// Only works if provided a single username
+		if ( 1 < count( $assoc_args ) ) {
+			$assoc_args['name'] = '';
+		}
+
+		foreach ( $args as $talent ) {
+			$this->import( $talent, $assoc_args['name'], $assoc_args['type'] );
+		}
+	}
+
+	/**
+	 * @param string $username WordPress.org username.
+	 * @param string $name     Talent's full name.
+	 * @param string $type     Talent type (person or company).
+	 */
+	protected function import( $username, $name, $type ) {
+		$importer = new Importer( $username, $name, $type );
 		WP_CLI::line( 'Importing ' . $username . '…' );
 
 		$result = $importer->import();
@@ -47,17 +73,20 @@ class Talent_Command extends \WP_CLI_Command {
 			/** @var \WP_Error $status */
 			WP_CLI::warning( $result->get_error_message() );
 		} else {
-			WP_CLI::success( sprintf( 'Successfully imported %s. Post ID: %s', $username, $result ) );
+			WP_CLI::success( sprintf( 'Successfully imported %s. Post ID: %s', get_the_title( $result ), $result ) );
 		}
 	}
 
 	/**
-	 * Update the talent's data
+	 * Update the talent's data.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <username>
 	 * : The talent's WordPress.org username
+	 *
+	 * [--force-update]
+	 * : Update even data that hasn't expired yet.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -66,7 +95,7 @@ class Talent_Command extends \WP_CLI_Command {
 	 *
 	 * @synopsis <username> [--force-update]
 	 */
-	function update( $args, $assoc_args ) {
+	public function update( $args, $assoc_args ) {
 		list( $username ) = $args;
 
 		$defaults = array(
