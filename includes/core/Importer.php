@@ -75,7 +75,8 @@ class Importer {
 		$collector = new Profile_Collector( get_post( $post_id ) );
 		$collector->_retrieve_data();
 
-		new Gravatar_Collector( get_post( $post_id ) );
+		$collector = new Gravatar_Collector( get_post( $post_id ) );
+		$collector->_retrieve_data();
 
 		return $post_id;
 	}

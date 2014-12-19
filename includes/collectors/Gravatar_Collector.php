@@ -44,6 +44,12 @@ class Gravatar_Collector extends Collector {
 			return false;
 		}
 
+		$body = json_decode( $body );
+
+		if ( null === $body ) {
+			return false;
+		}
+
 		if ( ! isset( $body->entry[0] ) ) {
 			return false;
 		}
