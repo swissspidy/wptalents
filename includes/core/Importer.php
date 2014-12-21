@@ -44,6 +44,13 @@ class Importer {
 	 * @return int|WP_Error Post ID on success, WP_Error object otherwise.
 	 */
 	public function import() {
+		if ( ! post_type_exists( $this->type ) ) {
+			return new WP_Error(
+				'invalid_post_type',
+				sprintf( __( 'Invalid post type "%s"!', 'wptalents' ), $this->type )
+			);
+		}
+
 		$query = new WP_Query( array(
 			'post_type'      => $this->type,
 			'post_status'    => 'any',
@@ -61,8 +68,7 @@ class Importer {
 
 		$post_id = wp_insert_post( array(
 				'post_title'   => $this->name,
-				'post_type'    => 'person',
-				'post_excerpt' => '',
+				'post_type'    => $this->type,
 			)
 		);
 
