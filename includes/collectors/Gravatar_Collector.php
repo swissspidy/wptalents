@@ -54,7 +54,15 @@ class Gravatar_Collector extends Collector {
 			return false;
 		}
 
-		$social = array();
+		$social = get_post_meta( $this->post->ID, 'social', true );
+
+		if ( isset( $social[0] ) && is_array( $social[0] ) ) {
+			foreach ( $social[0] as $key => $value ) {
+				$social[ $key ] = $value;
+			}
+
+			unset( $social[0] );
+		}
 
 		foreach ( $body->entry[0]->accounts as $account ) {
 			switch ( $account->shortname ) {
@@ -79,7 +87,7 @@ class Gravatar_Collector extends Collector {
 			$social['url'] = $body->entry[0]->urls[0]->value;
 		}
 
-		update_post_meta( $this->post->ID, 'social', $social );
+		return (bool) update_post_meta( $this->post->ID, 'social', $social );
 	}
 
 }
