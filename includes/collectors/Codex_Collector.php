@@ -17,8 +17,8 @@ class Codex_Collector extends Collector {
 		$data = get_post_meta( $this->post->ID, '_codex_count', true );
 
 		if ( ( ! $data ||
-			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-			&& $this->options['may_renew']
+		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		     && $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -55,8 +55,13 @@ class Codex_Collector extends Collector {
 			return false;
 		}
 
-		$raw   = json_decode( $results );
-		$count = (int) $raw->query->users[0]->editcount;
+		$raw = json_decode( $results );
+
+		if ( isset( $raw->query->users[0]->editcount ) ) {
+			$count = (int) $raw->query->users[0]->editcount;
+		} else {
+			$count = 0;
+		}
 
 		$data = array(
 			'data'       => $count,
