@@ -104,7 +104,7 @@ class Score_Collector extends Collector {
 
 		$score = 0;
 
-		if ( 1 > count( $plugins ) ) {
+		if ( ! is_array( $plugins ) || 1 > count( $plugins ) ) {
 			return $score;
 		}
 
@@ -169,7 +169,7 @@ class Score_Collector extends Collector {
 
 		$score = 0;
 
-		if ( 1 > count( $themes ) ) {
+		if ( ! is_array( $themes ) || 1 > count( $themes ) ) {
 			return $score;
 		}
 
