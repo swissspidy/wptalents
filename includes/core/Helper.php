@@ -268,7 +268,7 @@ class Helper {
 		);
 
 		foreach ( $meta_fields as $field => $value ) {
-			if ( '' === $value ) {
+			if ( '' === $value || is_array( $value ) ) {
 				continue;
 			}
 
