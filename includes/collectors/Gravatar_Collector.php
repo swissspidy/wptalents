@@ -32,7 +32,7 @@ class Gravatar_Collector extends Collector {
 	 */
 	public function _retrieve_data() {
 
-		$profile = Helper::get_talent_meta( get_post( 246 ), 'profile' );
+		$profile = Helper::get_talent_meta( $this->post, 'profile' );
 
 		$url = str_replace( 'https://secure.gravatar.com/avatar/', 'https://www.gravatar.com/', $profile['avatar'] );
 
@@ -54,7 +54,7 @@ class Gravatar_Collector extends Collector {
 			return false;
 		}
 
-		$social = get_post_meta( $this->post->ID, 'social' );
+		$social = array();
 
 		foreach ( $body->entry[0]->accounts as $account ) {
 			switch ( $account->shortname ) {
@@ -67,6 +67,9 @@ class Gravatar_Collector extends Collector {
 					break;
 				case 'google':
 					$social['google-plus'] = $account->userid;
+					break;
+				case 'wordpress':
+					$social['url'] = $account->url;
 				default:
 					break;
 			}
