@@ -134,7 +134,12 @@ class Score_Collector extends Collector {
 
 		// Check the average downloads count using the median value
 		sort( $total_downloads, SORT_NUMERIC );
-		$avg_downloads = $total_downloads[ (int) round( ( count( $total_downloads ) ) / 2 ) - 1 ];
+
+		if ( ! empty( $total_downloads ) ) {
+			$avg_downloads = $total_downloads[ (int) round( ( count( $total_downloads ) ) / 2 ) - 1 ];
+		} else {
+			$avg_downloads = 0;
+		}
 
 		// Adjust score based on average downloads
 		if ( $avg_downloads > 100000 ) {
@@ -182,7 +187,12 @@ class Score_Collector extends Collector {
 
 		// Check the average downloads count using the median value
 		sort( $total_downloads, SORT_NUMERIC );
-		$avg_downloads = $total_downloads[ (int) round( count( $total_downloads ) / 2 ) - 1 ];
+
+		if ( ! empty( $total_downloads ) ) {
+			$avg_downloads = $total_downloads[ (int) round( count( $total_downloads ) / 2 ) - 1 ];
+		} else {
+			$avg_downloads = 0;
+		}
 
 		// Adjust score based on average downloads
 		if ( $avg_downloads > 100000 ) {
