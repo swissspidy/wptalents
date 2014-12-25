@@ -65,7 +65,7 @@ class Talent_Command extends \WP_CLI_Command {
 	 */
 	protected function import( $username, $name, $type ) {
 		$importer = new Importer( $username, $name, $type );
-		WP_CLI::line( 'Importing ' . $username . '…' );
+		WP_CLI::line( 'Importing ' . $username . '...' );
 
 		$result = $importer->import();
 
@@ -118,9 +118,10 @@ class Talent_Command extends \WP_CLI_Command {
 			return;
 		}
 
+		/** @var \WP_Post $post */
 		$post = $query->posts[0];
 
-		WP_CLI::line( sprintf( __( 'Updating %s (ID: %d)…', 'wptalents' ), $post->post_title, $post->ID ) );
+		WP_CLI::line( sprintf( __( 'Updating %s (ID: %d)...', 'wptalents' ), $post->post_title, $post->ID ) );
 
 		$collectors = array(
 			'Changeset_Collector',
@@ -135,6 +136,7 @@ class Talent_Command extends \WP_CLI_Command {
 			'WordPressTv_Collector',
 		);
 
+		/** @var \WPTalents\Collector\Collector $collector */
 		foreach ( $collectors as $collector ) {
 			$collector = '\\WPTalents\\Collector\\' . $collector;
 			$collector = new $collector( $post );
