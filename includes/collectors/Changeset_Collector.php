@@ -57,7 +57,11 @@ class Changeset_Collector extends Collector {
 
 		preg_match( $pattern, $results, $matches );
 
-		$count = intval( $matches[1] );
+		$count = 0;
+
+		if ( isset( $matches[1] ) ) {
+			$count = intval( $matches[1] );
+		}
 
 		$data = array(
 			'data'       => $count,

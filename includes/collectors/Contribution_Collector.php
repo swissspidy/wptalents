@@ -44,7 +44,8 @@ class Contribution_Collector extends Collector {
 		$contributions = array();
 
 		foreach ( range( 3.2, $wp_version, 0.1 ) as $version ) {
-			$role = $this->_loop_wp_version( number_format( $version, 1 ), $this->options['username'] );
+			$version = number_format( $version, 1 );
+			$role = $this->_loop_wp_version( $version, $this->options['username'] );
 
 			if ( $role ) {
 				$contributions[ $version ] = $role;

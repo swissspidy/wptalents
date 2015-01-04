@@ -64,22 +64,24 @@ class Gravatar_Collector extends Collector {
 			unset( $social[0] );
 		}
 
-		foreach ( $body->entry[0]->accounts as $account ) {
-			switch ( $account->shortname ) {
-				case 'linkedin':
-					$social['linkedin'] = $account->url;
-					break;
-				case 'twitter';
-				case 'facebook';
-					$social[ $account->shortname ] = $account->username;
-					break;
-				case 'google':
-					$social['google-plus'] = $account->userid;
-					break;
-				case 'wordpress':
-					$social['url'] = $account->url;
-				default:
-					break;
+		if ( isset( $body->entry[0]->accounts ) ) {
+			foreach ( $body->entry[0]->accounts as $account ) {
+				switch ( $account->shortname ) {
+					case 'linkedin':
+						$social['linkedin'] = $account->url;
+						break;
+					case 'twitter';
+					case 'facebook';
+						$social[ $account->shortname ] = $account->username;
+						break;
+					case 'google':
+						$social['google-plus'] = $account->userid;
+						break;
+					case 'wordpress':
+						$social['url'] = $account->url;
+					default:
+						break;
+				}
 			}
 		}
 
