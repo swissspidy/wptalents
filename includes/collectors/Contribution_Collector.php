@@ -2,8 +2,6 @@
 
 namespace WPTalents\Collector;
 
-use \WP_Post;
-
 /**
  * Class Contribution_Collector
  * @package WPTalents\Collector
@@ -13,13 +11,13 @@ class Contribution_Collector extends Collector {
 	/**
 	 * Initialize the collector.
 	 *
-	 * @param WP_Post $post
+	 * @param \WP_User $user
 	 */
-	public function __construct( WP_Post $post ) {
+	public function __construct( \WP_User $user ) {
 
 		$this->expiration = 4 * WEEK_IN_SECONDS;
 
-		parent::__construct( $post );
+		parent::__construct( $user );
 	}
 
 	/**

@@ -17,7 +17,7 @@ class Forums_Collector extends Collector {
 	 */
 	public function get_data() {
 
-		$data = get_post_meta( $this->post->ID, '_forums', true );
+		$data = get_user_meta( $this->user->ID, '_wptalents_forums', true );
 
 		if ( ( ! $data ||
 			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
@@ -112,7 +112,7 @@ class Forums_Collector extends Collector {
 			'expiration' => time() + $this->expiration,
 		);
 
-		update_post_meta( $this->post->ID, '_forums', $data );
+		update_user_meta( $this->user->ID, '_wptalents_forums', $data );
 
 		return $data;
 

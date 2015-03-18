@@ -14,11 +14,11 @@ class Changeset_Collector extends Collector {
 	 */
 	public function get_data() {
 
-		$data = get_post_meta( $this->post->ID, '_changeset_count', true );
+		$data = get_user_meta( $this->user->ID, '_wptalents_changesets', true );
 
 		if ( ( ! $data ||
-			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-			&& $this->options['may_renew']
+		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		     && $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -38,7 +38,7 @@ class Changeset_Collector extends Collector {
 	 */
 	public function _retrieve_data() {
 
-		$results_url = add_query_arg(
+		$url = add_query_arg(
 			array(
 				'q'           => 'props+' . $this->options['username'],
 				'noquickjump' => '1',
@@ -47,28 +47,51 @@ class Changeset_Collector extends Collector {
 			'https://core.trac.wordpress.org/search'
 		);
 
-		$results = wp_remote_retrieve_body( wp_safe_remote_get( $results_url ) );
+		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
-		if ( is_wp_error( $results ) ) {
-			return false;
+		if ( '' === $body ) {
+			return new \WP_Error( 'retrieval_failed', __( 'Could not retrieve data', 'wptalents' ) );
 		}
 
-		$pattern = '/<meta name="totalResults" content="(\d*)" \/>/';
+		$dom = new \DOMDocument();
 
-		preg_match( $pattern, $results, $matches );
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( $body );
+		libxml_clear_errors();
 
-		$count = 0;
+		/** @var \DOMXPath $finder */
+		$finder = new \DOMXPath( $dom );
 
-		if ( isset( $matches[1] ) ) {
-			$count = intval( $matches[1] );
-		}
+		// Count
+
+		$count = $finder->query( '/html/head/meta[@name="totalResults"]' )->item( 0 )->getAttribute( 'content' );
 
 		$data = array(
-			'data'       => $count,
+			'data'       => array(
+				'count' => $count,
+			),
 			'expiration' => time() + $this->expiration,
 		);
 
-		update_post_meta( $this->post->ID, '_changeset_count', $data );
+		// All Changesets
+
+		/** @var \DOMNode $results */
+		$results = $finder->query( '//dl[@id="results"]/dt' );
+
+		/** @var \DOMNode $child */
+		foreach ( $results as $node ) {
+			$changeset   = explode( '/', $finder->query( 'a', $node )->item( 0 )->getAttribute( 'href' ) );
+			$description = explode( ':', $finder->query( 'a', $node )->item( 0 )->nodeValue, 2 );
+			preg_match( '/#([0-9]*)/', $finder->query( '../dd', $node )->item( 0 )->nodeValue, $matches );
+
+			$data['changesets'][] = array(
+				'changeset'   => $changeset[2],
+				'description' => $description[1],
+				'ticket'      => $matches[1],
+			);
+		}
+
+		update_user_meta( $this->user->ID, '_wptalents_changesets', $data );
 
 		return $data;
 

@@ -14,11 +14,11 @@ class Theme_Collector extends Collector {
 	 */
 	public function get_data() {
 
-		$data = get_post_meta( $this->post->ID, '_themes', true );
+		$data = get_user_meta( $this->user->ID, '_wptalents_themes', true );
 
 		if ( ( ! $data ||
-			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-			&& $this->options['may_renew']
+		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		     && $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
@@ -61,7 +61,7 @@ class Theme_Collector extends Collector {
 				'expiration' => time() + $this->expiration,
 			);
 
-			update_post_meta( $this->post->ID, '_themes', $data );
+			update_user_meta( $this->user->ID, '_wptalents_themes', $data );
 
 			return $data;
 		}

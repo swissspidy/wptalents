@@ -2,6 +2,7 @@
 
 namespace WPTalents\Core;
 
+use wpdb;
 use WPTalents\Collector\Changeset_Collector;
 use WPTalents\Collector\Codex_Collector;
 use WPTalents\Collector\Contribution_Collector;
@@ -11,8 +12,6 @@ use WPTalents\Collector\Profile_Collector;
 use WPTalents\Collector\Score_Collector;
 use WPTalents\Collector\Theme_Collector;
 use WPTalents\Collector\WordPressTv_Collector;
-use \WP_Post;
-use \wpdb;
 
 /**
  * Class Helper
@@ -92,8 +91,8 @@ class Helper {
 	}
 
 	/**
-	 * @param WP_Post $post     The post object or ID.
-	 * @param string  $type     The meta to retrieve. Defaults to all.
+	 * @param \WP_User $user    The post object or ID.
+	 * @param string   $type    The meta to retrieve. Defaults to all.
 	 *                          Possible values are:
 	 *                          - profile
 	 *                          - plugins
@@ -102,66 +101,66 @@ class Helper {
 	 * @return mixed            The required meta if available,
 	 *                          false if the post does not exist.
 	 */
-	public static function get_talent_meta( WP_Post $post, $type = 'all' ) {
+	public static function get_talent_meta( \WP_User $user, $type = 'all' ) {
 
 		switch ( $type ) {
 			case 'profile':
-				$collector = new Profile_Collector( $post );
+				$collector = new Profile_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'badges':
-				$collector = new Profile_Collector( $post );
+				$collector = new Profile_Collector( $user );
 
 				return $collector->get_data()['badges'];
 				break;
 			case 'plugins':
-				$collector = new Plugin_Collector( $post );
+				$collector = new Plugin_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'themes':
-				$collector = new Theme_Collector( $post );
+				$collector = new Theme_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'score':
-				$collector = new Score_Collector( $post );
+				$collector = new Score_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'forums':
-				$collector = new Forums_Collector( $post );
+				$collector = new Forums_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'wordpresstv':
-				$collector = new WordPressTv_Collector( $post );
+				$collector = new WordPressTv_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'contributions':
-				$collector = new Contribution_Collector( $post );
+				$collector = new Contribution_Collector( $user );
 
 				return $collector->get_data();
 				break;
 			case 'social':
-				return self::get_social_links( $post );
+				return self::get_social_links( $user );
 				break;
 			case 'dawnpatrol':
-				if ( ! $profile = esc_url( get_post_meta( $post->ID, 'dawnpatrol', true ) ) ) {
+				if ( ! $profile = esc_url( xprofile_get_field_data( 'Dawn Patrol', $user->ID ) ) ) {
 					return false;
 				}
 
 				return array(
 					'profile' => $profile,
-					'video'   => esc_url( get_post_meta( $post->ID, 'dawnpatrol-video', true ) ),
+					'video'   => esc_url( xprofile_get_field_data( 'Dawn Patrol Video', $user->ID ) ),
 				);
 			case 'map':
-				return self::get_map_data( $post );
+				return self::get_map_data( $user );
 				break;
 			case 'location':
-				$location = get_post_meta( $post->ID, 'location', true );
+				$location = xprofile_get_field_data( 'Location', $user->ID );
 
 				if ( is_string( $location ) ) {
 					return array(
@@ -174,29 +173,29 @@ class Helper {
 			default:
 				// Return all meta
 
-				$theme_collector        = new Theme_Collector( $post );
-				$plugin_collector       = new Plugin_Collector( $post );
-				$profile_collector      = new Profile_Collector( $post );
-				$contribution_collector = new Contribution_Collector( $post );
-				$codex_collector        = new Codex_Collector( $post );
-				$changeset_collector    = new Changeset_Collector( $post );
-				$score_collector        = new Score_Collector( $post );
-				$forums_collector       = new Forums_Collector( $post );
-				$wordpresstv_collector  = new WordPressTv_Collector( $post );
+				$theme_collector        = new Theme_Collector( $user );
+				$plugin_collector       = new Plugin_Collector( $user );
+				$profile_collector      = new Profile_Collector( $user );
+				$contribution_collector = new Contribution_Collector( $user );
+				$codex_collector        = new Codex_Collector( $user );
+				$changeset_collector    = new Changeset_Collector( $user );
+				$score_collector        = new Score_Collector( $user );
+				$forums_collector       = new Forums_Collector( $user );
+				$wordpresstv_collector  = new WordPressTv_Collector( $user );
 
 				return array(
-					'score'           => $score_collector->get_data(),
-					'social'          => self::get_social_links( $post ),
-					'dawnpatrol'      => self::get_talent_meta( $post, 'dawnpatrol' ),
-					'profile'         => $profile_collector->get_data(),
-					'map'             => self::get_map_data( $post ),
-					'plugins'         => $plugin_collector->get_data(),
-					'themes'          => $theme_collector->get_data(),
-					'contributions'   => $contribution_collector->get_data(),
-					'codex_count'     => $codex_collector->get_data(),
-					'changeset_count' => $changeset_collector->get_data(),
-					'forums'          => $forums_collector->get_data(),
-					'wordpresstv'     => $wordpresstv_collector->get_data(),
+					'score'         => $score_collector->get_data(),
+					'social'        => self::get_social_links( $user ),
+					'dawnpatrol'    => self::get_talent_meta( $user, 'dawnpatrol' ),
+					'profile'       => $profile_collector->get_data(),
+					'map'           => self::get_map_data( $user ),
+					'plugins'       => $plugin_collector->get_data(),
+					'themes'        => $theme_collector->get_data(),
+					'contributions' => $contribution_collector->get_data(),
+					'codex'         => $codex_collector->get_data(),
+					'changesets'    => $changeset_collector->get_data(),
+					'forums'        => $forums_collector->get_data(),
+					'wordpresstv'   => $wordpresstv_collector->get_data(),
 				);
 				break;
 
@@ -204,112 +203,70 @@ class Helper {
 	}
 
 	/**
-	 * Get the avatar URL of a talent.
-	 *
-	 * @param \WP_Post|int $post The post object or ID.
-	 *
-	 * @param int          $size Size of the avatar image.
-	 *
-	 * @return string The avatar URL.
-	 */
-	public static function get_avatar_url( $post, $size ) {
-
-		/** @var \WP_Post $post */
-		$post = get_post( $post );
-
-		$profile = self::get_talent_meta( $post, 'profile' );
-
-		if ( ! isset( $profile['avatar'] ) ) {
-			$profile = array( 'avatar' => 'https://secure.gravatar.com/avatar/' );
-		}
-
-		// Add size parameter
-		$avatar = add_query_arg( array( 's' => absint( $size ), 'd' => 'mm' ), $profile['avatar'] );
-
-		return esc_url( $avatar );
-
-	}
-
-	/**
-	 * Get the avatar of a talent.
-	 *
-	 * @param \WP_Post|int $post The post object or ID.
-	 *
-	 * @param int          $size
-	 *
-	 * @return mixed            The avatar img tag on success,
-	 *                          false if the post does not exist.
-	 */
-	public static function get_avatar( WP_Post $post, $size = 144 ) {
-
-		$avatar = self::get_avatar_url( $post, $size );
-
-		return sprintf(
-			'<img src="%1$s" alt="%2$s" width="%3$d" height="%3$d" />',
-			esc_url( $avatar ),
-			esc_attr( get_the_title( $post ) ),
-			absint( $size )
-		);
-
-	}
-
-	/**
-	 * @param \WP_Post $post
+	 * @param \WP_User $user
 	 *
 	 * @return array
 	 */
-	public static function get_social_links( WP_Post $post ) {
+	public static function get_social_links( \WP_User $user ) {
 
-		$social_links = array();
-
-		$meta_fields = array_merge(
-			array( 'wordpressdotorg' => get_post_meta( $post->ID, 'wordpress-username', true ) ),
-			(array) get_post_meta( $post->ID, 'social', true )
+		$social_links = array(
+			'WordPress.org' => array(
+				'name' => __( 'WordPress.org', 'wptalents' ),
+				'url'  => esc_url( 'https://profiles.wordpress.org/' . $user->user_login ),
+			)
 		);
 
-		foreach ( $meta_fields as $field => $value ) {
-			if ( '' === $value || is_array( $value ) ) {
-				continue;
-			}
+		$profile_fields = array(
+			'Dawn Patrol',
+			'Website',
+			'LinkedIn',
+			'Twitter',
+			'Facebook',
+			'Google+',
+			'GitHub',
+		);
+
+		foreach ( $profile_fields as $field ) {
+			$value = xprofile_get_field_data( $field, $user->ID );
 
 			switch ( $field ) {
-				case 'wordpressdotorg':
+				case 'Dawn Patrol':
 					$social_links[ $field ] = array(
-						'name' => __( 'WordPress.org', 'wptalents' ),
-						'url'  => esc_url( 'https://profiles.wordpress.org/' . $value ),
+						'name' => __( 'Dawn Patrol', 'wptalents' ),
+						'url'  => esc_url( $value ),
 					);
 					break;
-				case 'url':
+				case 'Website':
 					$social_links[ $field ] = array(
 						'name' => __( 'Website', 'wptalents' ),
 						'url'  => esc_url( $value ),
 					);
 					break;
-				case 'linkedin':
+				case 'LinkedIn':
 					$social_links[ $field ] = array(
 						'name' => __( 'LinkedIn', 'wptalents' ),
 						'url'  => esc_url( $value ),
 					);
 					break;
-				case 'github':
+				case 'GitHub':
 					$social_links[ $field ] = array(
 						'name' => __( 'GitHub', 'wptalents' ),
 						'url'  => esc_url( 'https://github.com/' . $value ),
 					);
 					break;
-				case 'twitter':
+				case 'Twitter':
 					$social_links[ $field ] = array(
 						'name' => __( 'Twitter', 'wptalents' ),
 						'url'  => esc_url( 'https://twitter.com/' . $value ),
 					);
 					break;
-				case 'facebook':
+				case 'Facebook':
 					$social_links[ $field ] = array(
 						'name' => __( 'Facebook', 'wptalents' ),
 						'url'  => esc_url( 'https://www.facebook.com/' . $value ),
 					);
 					break;
-				case 'google-plus':
+				case 'Google+':
 					$social_links[ $field ] = array(
 						'name' => __( 'Google+', 'wptalents' ),
 						'url'  => esc_url( 'https://plus.google.com/' . $value ),
@@ -330,13 +287,15 @@ class Helper {
 	 * If it's a company, it returns the locations of all
 	 * team members so we can show one big map.
 	 *
-	 * @param WP_Post $post The post object.
+	 * @param \WP_User $user The post object.
 	 *
 	 * @return array Location data as an array
 	 */
-	public static function get_map_data( WP_Post $post ) {
+	public static function get_map_data( \WP_User $user ) {
 
-		$location = self::get_talent_meta( $post, 'location' );
+		return false;
+
+		$location = self::get_talent_meta( $user, 'location' );
 
 		if ( empty( $location['lat'] ) || empty( $location['long'] ) || empty( $location['name'] ) ) {
 			return false;

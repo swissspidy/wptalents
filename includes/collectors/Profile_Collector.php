@@ -2,9 +2,9 @@
 
 namespace WPTalents\Collector;
 
-use \DOMDocument;
-use \DOMXPath;
-use \DateTime;
+use DateTime;
+use DOMDocument;
+use DOMXPath;
 
 /**
  * Class Profile_Collector
@@ -14,24 +14,23 @@ class Profile_Collector extends Collector {
 
 	/**
 	 * @access public
-	 * @return mixed
 	 */
 	public function get_data() {
 
-		$data = get_post_meta( $this->post->ID, '_profile', true );
+		$expiration = get_user_meta( $this->user->ID, '_wptalents_profile_expiration', true );
 
-		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
+		if ( ( ! $expiration ||
+		       ( ! empty( $expiration ) && time() >= $expiration ) )
 		     && $this->options['may_renew']
 		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
 
-		if ( ! $data ) {
-			return 0;
-		}
+		// todo: which fields should be returned here?
+		return array(
+			'badges' => xprofile_get_field_data( 'Badges', $this->user->ID )
+		);
 
-		return $data['data'];
 	}
 
 	/**
@@ -43,10 +42,16 @@ class Profile_Collector extends Collector {
 
 		$url = 'https://profiles.wordpress.org/' . $this->options['username'];
 
+		$response = wp_safe_remote_get( $url );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
 		if ( '' === $body ) {
-			return false;
+			return new \WP_Error( 'retrieval_failed', __( 'Could not retrieve data', 'wptalents' ) );
 		}
 
 		$dom = new DOMDocument();
@@ -64,6 +69,7 @@ class Profile_Collector extends Collector {
 		$member_since = $finder->query( '//li[@id="user-member-since"]' );
 		$website      = $finder->query( '//li[@id="user-website"]/a' );
 		$company      = $finder->query( '//li[@id="user-company"]' );
+		$slack        = $finder->query( '//li[@id="slack-username"]' );
 		$badges       = $finder->query( '//ul[@id="user-badges"]/li/div' );
 
 		$data = array(
@@ -95,6 +101,12 @@ class Profile_Collector extends Collector {
 			$data['company'] = trim( preg_replace( '/\t+/', '', $company->item( 0 )->nodeValue ) );
 		}
 
+		if ( $slack->length ) {
+			$data['slack'] = trim( preg_replace( '/\t+/', '', $slack->item( 0 )->nodeValue ) );
+			$username      = explode( ' ', $data['slack'] );
+			$data['slack'] = substr( trim( $username[0] ), 1 );
+		}
+
 		if ( $website->length ) {
 			$data['website'] = trim( $website->item( 0 )->getAttribute( 'href' ) );
 		}
@@ -103,47 +115,41 @@ class Profile_Collector extends Collector {
 			$data['badges'][] = $badge->getAttribute( 'title' );
 		}
 
-		$location = get_post_meta( $this->post->ID, 'location' );
+		update_user_meta( $this->user->ID, '_wptalents_avatar', $data['avatar'] );
 
-		if ( empty( $location ) ) {
-			update_post_meta( $this->post->ID, 'location', $data['location'] );
+		if ( '' === xprofile_get_field_data( 'Badges', $this->user->ID ) ) {
+			xprofile_set_field_data( 'Badges', $this->user->ID, $data['badges'] );
 		}
 
-		$social = (array) get_post_meta( $this->post->ID, 'social' );
-
-		if ( ! isset( $social['url'] ) && isset( $data['website'] ) ) {
-			$social['url'] = $data['website'];
-			update_post_meta( $this->post->ID, 'social', $social );
+		if ( '' === xprofile_get_field_data( 'Location', $this->user->ID ) ) {
+			xprofile_set_field_data( 'Location', $this->user->ID, $data['location'] );
 		}
 
-		if ( $this->post->post_title === $this->options['username'] && ! empty( $data['name'] ) ) {
-			$this->post->post_title = (string) $data['name'];
+		if ( '' === xprofile_get_field_data( 'Bio', $this->user->ID ) ) {
+			xprofile_set_field_data( 'Bio', $this->user->ID, $description );
+		}
 
-			if ( empty( $this->post->post_name ) ) {
-				$this->post->post_name = sanitize_title( $this->post->post_title );
+		if ( '' === xprofile_get_field_data( 'Website', $this->user->ID ) ) {
+			xprofile_set_field_data( 'Website', $this->user->ID, $description );
+		}
+
+		if ( '' === xprofile_get_field_data( 'Name', $this->user->ID ) && ! empty( $data['name'] ) ) {
+			xprofile_set_field_data( 'Name', $this->user->ID, $data['name'] );
+		}
+
+		if ( '' === xprofile_get_field_data( 'Slack', $this->user->ID ) ) {
+			xprofile_set_field_data( 'Slack', $this->user->ID, $data['slack'] );
+		}
+
+		if ( ! empty( $data['company'] ) && 'person' === bp_get_member_type( $this->user->ID ) ) {
+			if ( '' === xprofile_get_field_data( 'Job', $this->user->ID ) ) {
+				xprofile_set_field_data( 'Job', $this->user->ID, $data['company'] );
 			}
 		}
 
-		if ( '' === $this->post->post_content ) {
-			$this->post->post_content = $description;
-		}
+		update_user_meta( $this->user->ID, '_wptalents_profile_expiration', time() + $this->expiration );
 
-		wp_update_post( $this->post );
-
-		if ( ! empty( $data['company'] ) && 'person' === $this->post->post_type )  {
-			if ( '' === get_post_meta( $this->post->ID, 'job', true ) ) {
-				update_post_meta( $this->post->ID, 'job', $data['company'] );
-			}
-		}
-
-		$data = array(
-			'data'       => $data,
-			'expiration' => time() + $this->expiration,
-		);
-
-		update_post_meta( $this->post->ID, '_profile', $data );
-
-		return $data;
+		return true;
 
 	}
 

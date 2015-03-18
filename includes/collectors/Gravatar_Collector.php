@@ -2,8 +2,6 @@
 
 namespace WPTalents\Collector;
 
-use \WPTalents\Core\Helper;
-
 /**
  * Class Gravatar_Collector
  * @package WPTalents\Collector
@@ -16,13 +14,15 @@ class Gravatar_Collector extends Collector {
 	 */
 	public function get_data() {
 
-		$social_links = Helper::get_social_links( $this->post );
+		$expiration = get_user_meta( $this->user->ID, '_wptalents_gravatar_expiration', true );
 
-		if ( 1 >= count( $social_links ) ) {
+		if ( ( ! $expiration ||
+		       ( ! empty( $expiration ) && time() >= $expiration ) )
+		     && $this->options['may_renew']
+		) {
 			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
 		}
 
-		return $social_links;
 	}
 
 	/**
@@ -32,16 +32,22 @@ class Gravatar_Collector extends Collector {
 	 */
 	public function _retrieve_data() {
 
-		$profile = Helper::get_talent_meta( $this->post, 'profile' );
+		$avatar = get_user_meta( $this->user->ID, '_wptalents_avatar', true );
 
-		$url = str_replace( 'https://secure.gravatar.com/avatar/', 'https://www.gravatar.com/', $profile['avatar'] );
+		$url = str_replace( 'https://secure.gravatar.com/avatar/', 'https://www.gravatar.com/', $avatar );
 
 		$url = remove_query_arg( array( 's', 'd' ), $url ) . '.json';
+
+		$response = wp_safe_remote_get( $url );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
 		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
 		if ( '' === $body ) {
-			return false;
+			return new \WP_Error( 'retrieval_failed', __( 'Could not retrieve data', 'wptalents' ) );
 		}
 
 		$body = json_decode( $body );
@@ -54,42 +60,44 @@ class Gravatar_Collector extends Collector {
 			return false;
 		}
 
-		$social = get_post_meta( $this->post->ID, 'social', true );
-
-		if ( isset( $social[0] ) && is_array( $social[0] ) ) {
-			foreach ( $social[0] as $key => $value ) {
-				$social[ $key ] = $value;
-			}
-
-			unset( $social[0] );
-		}
-
 		if ( isset( $body->entry[0]->accounts ) ) {
 			foreach ( $body->entry[0]->accounts as $account ) {
 				switch ( $account->shortname ) {
 					case 'linkedin':
-						$social['linkedin'] = $account->url;
+						if ( '' === xprofile_get_field_data( 'LinkedIn', $this->user->ID ) ) {
+							xprofile_set_field_data( 'LinkedIn', $this->user->ID, $account->url );
+						}
 						break;
 					case 'twitter';
+						if ( '' === xprofile_get_field_data( 'Twitter', $this->user->ID ) ) {
+							xprofile_set_field_data( 'Twitter', $this->user->ID, $account->username );
+						}
+						break;
 					case 'facebook';
-						$social[ $account->shortname ] = $account->username;
+						if ( '' === xprofile_get_field_data( 'Facebook', $this->user->ID ) ) {
+							xprofile_set_field_data( 'Facebook', $this->user->ID, $account->username );
+						}
 						break;
 					case 'google':
-						$social['google-plus'] = $account->userid;
+						if ( '' === xprofile_get_field_data( 'Google+', $this->user->ID ) ) {
+							xprofile_set_field_data( 'Google+', $this->user->ID, $account->userid );
+						}
 						break;
 					case 'wordpress':
-						$social['url'] = $account->url;
+						if ( '' === xprofile_get_field_data( 'Website', $this->user->ID ) ) {
+							xprofile_set_field_data( 'Website', $this->user->ID, $account->url );
+						}
 					default:
 						break;
 				}
 			}
 		}
 
-		if ( ! empty( $body->entry[0]->urls ) ) {
-			$social['url'] = $body->entry[0]->urls[0]->value;
+		if ( '' === xprofile_get_field_data( 'Website', $this->user->ID ) && ! empty( $body->entry[0]->urls ) ) {
+			xprofile_set_field_data( 'Website', $this->user->ID, $body->entry[0]->urls[0]->value );
 		}
 
-		return (bool) update_post_meta( $this->post->ID, 'social', $social );
+		return true;
 	}
 
 }

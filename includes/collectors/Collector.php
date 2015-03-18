@@ -2,7 +2,7 @@
 
 namespace WPTalents\Collector;
 
-use \WP_Post;
+use WP_Post;
 
 /**
  * Class Collector
@@ -22,11 +22,11 @@ abstract class Collector {
 	/**
 	 * Initialize the collector.
 	 *
-	 * @param WP_Post $post
+	 * @param \WP_User $user
 	 */
-	public function __construct( WP_Post $post ) {
+	public function __construct( \WP_User $user ) {
 
-		$this->post = $post;
+		$this->user = $user;
 
 		$may_renew = true;
 
@@ -40,11 +40,11 @@ abstract class Collector {
 		}
 
 		$this->options = array(
-			'username'  => get_post_meta( $post->ID, 'wordpress-username', true ),
+			'username'  => $this->user->user_login,
 			'may_renew' => $may_renew,
 		);
 
-		$this->options = apply_filters( 'wptalents_data_collector_options', $this->options, $post );
+		$this->options = apply_filters( 'wptalents_data_collector_options', $this->options, $this->user );
 
 	}
 

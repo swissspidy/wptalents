@@ -2,8 +2,8 @@
 
 namespace WPTalents\Collector;
 
+use DateTime;
 use WPTalents\Core\Helper;
-use \DateTime;
 
 /**
  * Class Score_Collector
@@ -17,8 +17,8 @@ class Score_Collector extends Collector {
 	 */
 	public function get_data() {
 
-		$score     = get_post_meta( $this->post->ID, '_score', true );
-		$score_exp = get_post_meta( $this->post->ID, '_score_expiration', true );
+		$score     = get_user_meta( $this->user->ID, '_wptalents_score', true );
+		$score_exp = get_user_meta( $this->user->ID, '_wptalents_score_expiration', true );
 
 		if ( ( ! ( $score || $score_exp ) ||
 		       ( isset( $score_exp ) && time() >= $score_exp ) )
@@ -44,7 +44,7 @@ class Score_Collector extends Collector {
 	 */
 	public function _retrieve_data() {
 
-		$talent_meta = Helper::get_talent_meta( $this->post );
+		$talent_meta = Helper::get_talent_meta( $this->user );
 
 		// Minimum value
 		$score = 1;
@@ -60,11 +60,11 @@ class Score_Collector extends Collector {
 
 		// Adjust score based on number of core contributions
 
-		if ( isset( $talent_meta['contribution_count'] ) ) {
+		if ( isset( $talent_meta['contributions'] ) ) {
 			$score += $this->_calculate_contribution_score(
 				$talent_meta['contributions'],
-				$talent_meta['codex_count'],
-				$talent_meta['contribution_count']
+				$talent_meta['codex']['count'],
+				$talent_meta['changesets']['count']
 			);
 		}
 
@@ -74,8 +74,8 @@ class Score_Collector extends Collector {
 		$score += $this->_calculate_forums_score( $talent_meta['forums'] );
 
 		// Get median score for the company
-		if ( 'company' === get_post_type( $this->post ) ) {
-			if ( 1 == get_post_meta( $this->post->ID, 'wordpress_vip' ) ) {
+		if ( 'company' === bp_get_member_type( $this->user->ID ) ) {
+			if ( '' === xprofile_get_field_data( 'Badges', $this->user->ID ) ) {
 				$score += 10;
 			}
 
@@ -86,8 +86,8 @@ class Score_Collector extends Collector {
 			}
 		}
 
-		update_post_meta( $this->post->ID, '_score', absint( $score ) );
-		update_post_meta( $this->post->ID, '_score_expiration', time() + $this->expiration );
+		update_user_meta( $this->user->ID, '_wptalents_score', absint( $score ) );
+		update_user_meta( $this->user->ID, '_wptalents_score_expiration', time() + $this->expiration );
 
 		return $score;
 
@@ -259,6 +259,8 @@ class Score_Collector extends Collector {
 	/**
 	 * Calculate the score for all the users' contributions.
 	 *
+	 * @todo Refactoring without looping over the array twice.
+	 *
 	 * @param array $contributions
 	 * @param int   $codex_count
 	 * @param int   $changeset_count
@@ -269,7 +271,7 @@ class Score_Collector extends Collector {
 
 		$score = 0;
 
-		$contribution_types = array();
+		$contribution_types = array_combine( array_values( $contributions ), array_fill( 0, count( $contributions ), 0 ) );
 
 		// Save number of contributions in this array
 		foreach ( $contributions as $contribution ) {
@@ -321,17 +323,11 @@ class Score_Collector extends Collector {
 
 		$score = 0;
 
-		// Find connected posts
-		$people = get_posts( array(
-			'connected_type'   => 'team',
-			'connected_items'  => $this->post,
-			'posts_per_page'   => - 1,
-			'suppress_filters' => false,
-		) );
+		$people = bp_get_member_ids( $this->user->ID );
 
-		/** @var \WP_Post $person */
+		/** @var int[] $person */
 		foreach ( $people as $person ) {
-			$person_collector = new self( $person );
+			$person_collector = new self( get_user_by( 'id', $person ) );
 			$score += $person_collector->get_data();
 
 			unset( $person_collector );

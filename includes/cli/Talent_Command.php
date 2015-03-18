@@ -8,8 +8,8 @@
 
 namespace WPTalents\CLI;
 
+use WP_CLI;
 use WPTalents\Core\Importer;
-use \WP_CLI;
 
 /**
  * Import and update WordPress talents.
@@ -73,7 +73,7 @@ class Talent_Command extends \WP_CLI_Command {
 			/** @var \WP_Error $status */
 			WP_CLI::warning( $result->get_error_message() );
 		} else {
-			WP_CLI::success( sprintf( 'Successfully imported %s. Post ID: %s', get_the_title( $result ), $result ) );
+			WP_CLI::success( sprintf( 'Successfully imported %s. User ID: %s', $result->user_nicename, $result->ID ) );
 		}
 	}
 
@@ -104,25 +104,18 @@ class Talent_Command extends \WP_CLI_Command {
 
 		$assoc_args = wp_parse_args( $assoc_args, $defaults );
 
-		$query = new \WP_Query( array(
-			'post_type'      => array( 'person', 'company' ),
-			'post_status'    => 'any',
-			'meta_key'       => 'wordpress-username',
-			'meta_value'     => $username,
-			'posts_per_page' => 1,
-		) );
+		$user = get_user_by( 'slug', $username );
 
-		if ( ! $query->have_posts() ) {
+		if ( ! is_a( $user, 'WP_User' ) ) {
 			WP_CLI::warning( __( 'Talent does not exist!', 'wptalents' ) );
 
 			return;
 		}
 
-		/** @var \WP_Post $post */
-		$post = $query->posts[0];
 
-		WP_CLI::line( sprintf( __( 'Updating %s (ID: %d)...', 'wptalents' ), $post->post_title, $post->ID ) );
+		WP_CLI::line( sprintf( __( 'Updating %s (ID: %d)...', 'wptalents' ), $user->user_login, $user->ID ) );
 
+		/** @var \WPTalents\Collector\Collector[] $collectors */
 		$collectors = array(
 			'Changeset_Collector',
 			'Codex_Collector',
@@ -139,7 +132,7 @@ class Talent_Command extends \WP_CLI_Command {
 		/** @var \WPTalents\Collector\Collector $collector */
 		foreach ( $collectors as $collector ) {
 			$collector = '\\WPTalents\\Collector\\' . $collector;
-			$collector = new $collector( $post );
+			$collector = new $collector( $user );
 
 			if ( true === $assoc_args['force-update'] ) {
 				$collector->_retrieve_data();
@@ -147,6 +140,51 @@ class Talent_Command extends \WP_CLI_Command {
 		}
 
 		WP_CLI::success( __( 'Talent successfully updated!', 'wptalents' ) );
+	}
+
+	/**
+	 * Fake activate a newly added user.
+	 *
+	 * This sets the user's time of last activity to now.
+	 *
+	 * Without this, the user won't be showing up in the BuddyPress members directory.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <username>
+	 * : The talent's WordPress.org username
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp talent activate johndoe
+	 *
+	 * @synopsis <username>
+	 */
+	public function activate( $args ) {
+		list( $username ) = $args;
+
+		$user = get_user_by( 'slug', $username );
+
+		if ( ! is_a( $user, 'WP_User' ) ) {
+			WP_CLI::warning( __( 'Talent does not exist!', 'wptalents' ) );
+
+			return;
+		}
+
+		// Switch to the user and back again
+		bp_update_user_last_activity( $user->ID );
+
+		// Add activity item
+		$userlink = bp_core_get_userlink( $user->ID );
+
+		bp_activity_add( array(
+			'user_id'   => $user->ID,
+			'action'    => sprintf( __( '%s was added to WP Talents', 'wptalents' ), $userlink ),
+			'component' => 'profile',
+			'type'      => 'user_created',
+		) );
+
+		WP_CLI::success( __( 'Talent successfully activated! ', 'wptalents' ) );
 	}
 
 }
