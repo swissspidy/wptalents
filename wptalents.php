@@ -48,6 +48,7 @@ if ( $wptalents_requirements_check->passes() ) {
 
 	\WPTalents\Core\Plugin::start( __FILE__ );
 	\WPTalents\Core\BuddyPress::start( __FILE__ );
+	\WPTalents\Core\ElasticPress::start( __FILE__ );
 
 	// Activation / deactivation hooks.
 	register_activation_hook( __FILE__, array( \WPTalents\Core\Plugin::get_instance(), 'activate_plugin' ) );

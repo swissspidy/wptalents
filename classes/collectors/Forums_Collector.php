@@ -36,7 +36,7 @@ class Forums_Collector {
 
 			$data = self::_retrieve_forums_data( $url );
 
-			bp_update_user_meta( $user_id, '_wptalents_forums_' . $intl_forums_base, $data );
+			bp_update_user_meta( $user_id, '_wptalents_intl_forums', $data );
 		}
 
 		$url = 'https://wordpress.org/support/profile/' . $user->user_login;
