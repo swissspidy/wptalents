@@ -1,4 +1,7 @@
 <?php
+/**
+ * Collect the score of an individual talent.
+ */
 
 namespace WPTalents\Collector;
 
@@ -9,85 +12,62 @@ use WPTalents\Core\Helper;
  * Class Score_Collector
  * @package WPTalents\Collector
  */
-class Score_Collector extends Collector {
-
+class Score_Collector {
 	/**
-	 * @access public
-	 * @return mixed
-	 */
-	public function get_data() {
-
-		$score     = get_user_meta( $this->user->ID, '_wptalents_score', true );
-		$score_exp = get_user_meta( $this->user->ID, '_wptalents_score_expiration', true );
-
-		if ( ( ! ( $score || $score_exp ) ||
-		       ( isset( $score_exp ) && time() >= $score_exp ) )
-		     && $this->options['may_renew']
-		) {
-			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
-		}
-
-		$score = apply_filters( 'wptalents_score', $score );
-
-		if ( ! $score ) {
-			return 1;
-		}
-
-		return absint( $score );
-
-	}
-
-	/**
-	 * @access protected
+	 * Retrieve data from the WordPress.org profile of a user.
+	 *
+	 * @param int $user_id User ID.
 	 *
 	 * @return bool
 	 */
-	public function _retrieve_data() {
+	public static function retrieve_data( $user_id ) {
+		$user = get_user_by( 'id', $user_id );
 
-		$talent_meta = Helper::get_talent_meta( $this->user );
+		if ( ! $user ) {
+			return false;
+		}
+
+		$talent_meta = Helper::get_talent_meta( $user );
 
 		// Minimum value
 		$score = 1;
 
 		// Calculate plugins score
-		$score += $this->_calculate_plugin_score( $talent_meta['plugins'] );
+		$score += self::_calculate_plugin_score( $talent_meta['plugins'] );
 
 		// Calculate themes score
-		$score += $this->_calculate_theme_score( $talent_meta['themes'] );
+		$score += self::_calculate_theme_score( $talent_meta['themes'] );
 
 		// Calculate WordPress.org profile data score
-		$score += $this->_calculate_badge_score( $talent_meta['profile']['badges'] );
+		$score += self::_calculate_badge_score( $talent_meta['profile']['badges'] );
 
-		// Adjust score based on number of core contributions
-
+		// Adjust score based on number of core contributions.
 		if ( isset( $talent_meta['contributions'] ) ) {
-			$score += $this->_calculate_contribution_score(
+			$score += self::_calculate_contribution_score(
 				$talent_meta['contributions'],
-				$talent_meta['codex']['count'],
 				$talent_meta['changesets']['count']
 			);
 		}
 
 		// Adjust score based on number of WordPress.tv videos
-		$score += $this->_calculate_wordpresstv_score( $talent_meta['wordpresstv'] );
+		$score += self::_calculate_wordpresstv_score( $talent_meta['wordpresstv'] );
 
-		$score += $this->_calculate_forums_score( $talent_meta['forums'] );
+		$score += self::_calculate_forums_score( $talent_meta['forums'] );
 
 		// Get median score for the company
-		if ( 'company' === bp_get_member_type( $this->user->ID ) ) {
-			if ( '' === xprofile_get_field_data( 'Badges', $this->user->ID ) ) {
+		if ( 'company' === bp_get_member_type( $user_id ) ) {
+			if ( '' === xprofile_get_field_data( 'Badges', $user_id ) ) {
 				$score += 10;
 			}
 
-			$team_score = $this->_calculate_team_score();
+			$team_score = self::_calculate_team_score( $user_id );
 
 			if ( $team_score ) {
 				$score = ( $team_score + $score ) / 2;
 			}
 		}
 
-		update_user_meta( $this->user->ID, '_wptalents_score', absint( $score ) );
-		update_user_meta( $this->user->ID, '_wptalents_score_expiration', time() + $this->expiration );
+		update_user_meta( $user_id, '_wptalents_score', absint( $score ) );
 
 		return $score;
 
@@ -104,7 +84,7 @@ class Score_Collector extends Collector {
 
 		$score = 0;
 
-		if ( ! is_array( $plugins ) || 1 > count( $plugins ) ) {
+		if ( ! is_array( $plugins ) || empty ( $plugins ) ) {
 			return $score;
 		}
 
@@ -155,7 +135,6 @@ class Score_Collector extends Collector {
 		}
 
 		return $score;
-
 	}
 
 	/**
@@ -165,7 +144,7 @@ class Score_Collector extends Collector {
 	 *
 	 * @return int
 	 */
-	public function _calculate_theme_score( $themes ) {
+	public static function _calculate_theme_score( $themes ) {
 
 		$score = 0;
 
@@ -218,7 +197,7 @@ class Score_Collector extends Collector {
 	 *
 	 * @return int
 	 */
-	public function _calculate_badge_score( $badges ) {
+	public static function _calculate_badge_score( $badges ) {
 
 		$score = 0;
 
@@ -262,12 +241,11 @@ class Score_Collector extends Collector {
 	 * @todo Refactoring without looping over the array twice.
 	 *
 	 * @param array $contributions
-	 * @param int   $codex_count
 	 * @param int   $changeset_count
 	 *
 	 * @return int
 	 */
-	public function _calculate_contribution_score( $contributions, $codex_count = 0, $changeset_count = 0 ) {
+	public static function _calculate_contribution_score( $contributions, $changeset_count = 0 ) {
 
 		$score = 0;
 
@@ -304,9 +282,6 @@ class Score_Collector extends Collector {
 			$score += $factor * $count;
 		}
 
-		// Adjust score based on number of codex contributions
-		$score += ( $codex_count / 20 < 20 ) ? $codex_count / 20 : 20;
-
 		// Adjust score based on number of props
 		$score += ( $changeset_count / 20 < 20 ) ? $changeset_count / 20 : 20;
 
@@ -317,20 +292,20 @@ class Score_Collector extends Collector {
 	/**
 	 * Calculate the overall team score.
 	 *
+	 * @param int $user_id User ID.
+	 *
 	 * @return bool|int
 	 */
-	public function _calculate_team_score() {
+	public static function _calculate_team_score( $user_id ) {
 
 		$score = 0;
 
-		$people = bp_get_member_ids( $this->user->ID );
+		$people = team_get_member_user_ids( $user_id );
 
 		/** @var int[] $person */
 		foreach ( $people as $person ) {
-			$person_collector = new self( get_user_by( 'id', $person ) );
-			$score += $person_collector->get_data();
-
-			unset( $person_collector );
+			// Todo: Get score of each person.
+			//$score += wptalents_get_score ( $person );
 		}
 
 		if ( $people ) {
@@ -348,7 +323,7 @@ class Score_Collector extends Collector {
 	 *
 	 * @return int
 	 */
-	public function _calculate_wordpresstv_score( $videos ) {
+	public static function _calculate_wordpresstv_score( $videos ) {
 
 		$score = 0;
 
@@ -378,7 +353,7 @@ class Score_Collector extends Collector {
 	 *
 	 * @return int
 	 */
-	public function _calculate_forums_score( $forums ) {
+	public static function _calculate_forums_score( $forums ) {
 
 		$score = 0;
 
@@ -402,7 +377,5 @@ class Score_Collector extends Collector {
 		}
 
 		return $score;
-
 	}
-
 }

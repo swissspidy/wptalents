@@ -1,7 +1,13 @@
 <?php
+/**
+ * Importer class.
+ *
+ * @package WPTalents
+ */
 
 namespace WPTalents\Core;
 
+use stdClass;
 use WP_Error;
 use WPTalents\Collector\Gravatar_Collector;
 use WPTalents\Collector\Profile_Collector;
@@ -12,21 +18,26 @@ use WPTalents\Collector\Profile_Collector;
  * @package WPTalents\Core
  */
 class Importer {
-
 	/**
-	 * @var string WordPress.org username
+	 * WordPress.org username.
+	 *
+	 * @var string
 	 */
 	protected $username;
 
 	/**
-	 * @var string Post Type.
+	 * Member type.
+	 *
+	 * @var string
 	 */
 	protected $type = 'person';
 
 	/**
+	 * Constructor.
+	 *
 	 * @param string $username WordPress.org username.
 	 * @param string $name     The talent's real name.
-	 * @param string $type     Post type, either person or company.
+	 * @param string $type     Member type, either person or company.
 	 */
 	public function __construct( $username, $name = '', $type = 'person' ) {
 		$this->name     = (string) $username;
@@ -39,8 +50,26 @@ class Importer {
 	}
 
 	/**
+	 * Check if there's a WordPress.org profile for a given username.
+	 *
+	 * @return bool True if the user exists, false otherwise.
+	 */
+	public function remote_user_exists() {
+		$url = 'https://profiles.wordpress.org/' . $this->username;
+
+		$response = wp_safe_remote_head( $url );
+
+		if ( is_wp_error( $response ) || 302 === $response['response']['code'] ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Imports a talent into the site based on their WordPress.org username.
-	 * @return bool|\WP_User User object on success, false otherwise.
+	 *
+	 * @return \WP_Error|\WP_User
 	 */
 	public function import() {
 		if ( null === bp_get_member_type_object( $this->type ) ) {
@@ -59,53 +88,47 @@ class Importer {
 			);
 		}
 
-		$user_id = wp_insert_user( array(
-			'user_login'    => $this->username,
-			'user_nicename' => sanitize_title( $this->name ),
-			'user_pass'     => wp_generate_password( 50 ),
-			'user_email'    => $this->username . '@chat.wordpress.org',
-		) );
+		// Temporarily disable the activation email.
+		add_filter( 'bp_core_signup_send_activation_key', '__return_false' );
+
+		$user_id = bp_core_signup_user(
+			$this->username,
+			wp_generate_password( 50 ),
+			$this->username . '@chat.wordpress.org',
+			array()
+		);
+
+		add_filter( 'bp_core_signup_send_activation_key', '__return_true' );
 
 		if ( is_wp_error( $user_id ) ) {
 			return new WP_Error( 'insert_failed', sprintf( __( 'Importing %s failed!', 'wptalents' ), $this->name ) );
 		}
 
+		// Update the user_nicename which is used for the URLs.
+		wp_update_user( array( 'ID' => $user_id, 'user_nicename' => $this->name ) );
+
 		if ( $this->name !== $this->username ) {
 			xprofile_set_field_data( 'Name', $user_id, $this->name );
 		}
 
-		// Set member tpe
+		// Set member tpe.
 		bp_set_member_type( $user_id, $this->type );
 
-		// Disable email notifications, otherwise they could get spammed
+		/**
+		 * Disable email notifications, otherwise they could get spammed.
+		 */
 
-		// Activity Component
+		// Activity Component.
 		add_user_meta( $user_id, 'notification_activity_new_mention', 'no', true );
 		add_user_meta( $user_id, 'notification_activity_new_reply', 'no', true );
 
-		// BuddyPress Team Plugin
+		// BuddyPress Team Plugin.
 		add_user_meta( $user_id, 'notification_team_membership_request', 'no', true );
 		add_user_meta( $user_id, 'notification_team_membership_accepted', 'no', true );
 
-		// BuddyPress Follow Plugin
+		// BuddyPress Follow Plugin.
 		add_user_meta( $user_id, 'notification_starts_following', 'no', true );
 
-		$user = get_user_by( 'id', $user_id );
-
-		$collector = new Profile_Collector( $user );
-		$profile   = $collector->_retrieve_data();
-
-		// If there's an error, delete the user again
-		if ( is_wp_error( $profile ) ) {
-			wp_delete_user( $user_id );
-
-			return $profile;
-		}
-
-		$collector = new Gravatar_Collector( $user );
-		$collector->_retrieve_data();
-
-		return $user;
+		return get_user_by( 'id', $user_id );
 	}
-
-} 
+}

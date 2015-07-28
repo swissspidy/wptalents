@@ -1,4 +1,9 @@
 <?php
+/**
+ * WordPress.tv collector that is hooked to a cron event.
+ *
+ * @package WPTalent
+ */
 
 namespace WPTalents\Collector;
 
@@ -7,66 +12,50 @@ use DOMDocument;
 use DOMXPath;
 
 /**
- * Class WordPressTv_Collector
+ * Class WordPressTv_Collector.
+ *
  * @package WPTalents\Collector
  */
-class WordPressTv_Collector extends Collector {
-
+class WordPressTv_Collector {
 	/**
-	 * @access public
-	 * @return mixed
-	 */
-	public function get_data() {
-
-		$data = get_user_meta( $this->user->ID, '_wptalents_wordpresstv', true );
-
-		if ( ( ! $data ||
-		       ( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-		     && $this->options['may_renew']
-		) {
-			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
-		}
-
-		if ( ! $data ) {
-			return 0;
-		}
-
-		return $data['data'];
-
-	}
-
-	/**
-	 * @access protected
+	 * Retrieve data about the user from WordPress.tv
+	 *
+	 * @param int $user_id User ID.
 	 *
 	 * @return bool
 	 */
-	public function _retrieve_data() {
+	public static function retrieve_data( $user_id ) {
+		$user = get_user_by( 'id', $user_id );
 
-		$name = sanitize_title( xprofile_get_field_data( 'Name', $this->user->ID ) );
+		if ( ! $user ) {
+			return false;
+		}
+
+		$name = sanitize_title( xprofile_get_field_data( 'Name', $user_id ) );
+
+		if ( '' === $name ) {
+			return false;
+		}
 
 		$url = trailingslashit( 'https://wordpress.tv/speakers/' . $name );
 
-		$data = $this->_retrieve_videos( $url );
+		$data = self::_retrieve_videos( $url );
 
-		$data = array(
-			'data'       => $data,
-			'expiration' => time() + $this->expiration,
-		);
+		if ( is_array( $data ) ) {
+			return bp_update_user_meta( $user_id, '_wptalents_wordpresstv', $data );
+		}
 
-		update_user_meta( $this->user->ID, '_wptalents_wordpresstv', $data );
-
-		return $data;
-
+		return false;
 	}
 
 	/**
 	 * Load the videos from a specified page. Is partly recursive.
 	 *
-	 * @param $url
+	 * @param string $url WordPress.tv URL.
 	 *
 	 * @return array
 	 */
-	public function _retrieve_videos( $url ) {
+	protected static function _retrieve_videos( $url ) {
 
 		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
@@ -90,7 +79,7 @@ class WordPressTv_Collector extends Collector {
 			'total_videos' => $videos->length,
 		);
 
-		/** @var $reply \DOMNode */
+		/* @var $reply \DOMNode */
 		foreach ( $videos as $video ) {
 			$img    = $finder->query( '*[contains(@class, "video-thumbnail")]/img', $video )->item( 0 )->getAttribute( 'src' );
 			$a_text = $finder->query( '*[contains(@class, "video-description")]/h4/a', $video )->item( 0 )->nodeValue;
@@ -116,12 +105,11 @@ class WordPressTv_Collector extends Collector {
 		}
 
 		if ( $older_videos->length ) {
-			$more_videos    = $this->_retrieve_videos( $older_videos->item( 0 )->getAttribute( 'href' ) );
+			$more_videos    = self::_retrieve_videos( $older_videos->item( 0 )->getAttribute( 'href' ) );
 			$data['videos'] = array_merge( $data['videos'], $more_videos['videos'] );
 			$data['total_videos'] += $more_videos['total_videos'];
 		}
 
 		return $data;
 	}
-
 }

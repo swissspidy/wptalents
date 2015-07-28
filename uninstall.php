@@ -1,15 +1,12 @@
 <?php
-
 /**
  * Fired when the plugin is uninstalled.
  *
  * @link       https://spinpress.com
  * @since      1.0.0
  *
- * @package    WP_Talents
+ * @package    WPTalents
  */
 
 // If uninstall not called from WordPress, then exit.
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit;
-}
+defined( 'WP_UNINSTALL_PLUGIN' ) or die;

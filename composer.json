@@ -1,40 +1,37 @@
 {
-  "name"        : "swissspidy/wptalents",
-  "description" : "Main Plugin for WPTalents.com",
-  "keywords"    : [
+  "name": "swissspidy/wptalents",
+  "description": "Main plugin for WP Talents",
+  "keywords": [
     "wordpress",
     "plugin",
     "wptalents"
   ],
-  "type"        : "wordpress-plugin",
-  "homepage"    : "https://github.com/swissspidy/wptalents",
-  "authors"     : [
+  "type": "wordpress-plugin",
+  "homepage": "https://github.com/swissspidy/wptalents",
+  "authors": [
     {
-      "name"    : "Pascal Birchler",
-      "email"   : "contact@spinpress.com",
+      "name": "Pascal Birchler",
+      "email": "contact@spinpress.com",
       "homepage": "https://spinpress.com/"
     }
   ],
-  "support"     : {
-    "issues": "https://github.com/swissspidy/wptalents/issues"
+  "require-dev": {
+    "phpmd/phpmd": "@stable",
+    "wp-coding-standards/wpcs": "dev-develop",
+    "sebastian/phpcpd": "*"
   },
-  "repositories": [
-    {
-      "type": "git",
-      "url" : "https://github.com/swissspidy/Custom-Meta-Boxes"
-    }
-  ],
-  "require"     : {
-    "humanmade/custom-meta-boxes": "dev-post-type-check"
+  "scripts": {
+    "post-install-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs",
+    "post-update-cmd": "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs"
   },
-  "autoload"    : {
+  "autoload": {
     "psr-4": {
-      "WPTalents\\API\\"      : "includes/api",
-      "WPTalents\\CLI\\"      : "includes/cli",
-      "WPTalents\\CMB\\"      : "includes/cmb",
-      "WPTalents\\Collector\\": "includes/collectors",
-      "WPTalents\\Core\\"     : "includes/core",
-      "WPTalents\\Types\\"    : "includes/types"
+      "WPTalents\\Lib\\": "lib",
+      "WPTalents\\API\\": "classes/api",
+      "WPTalents\\CLI\\": "classes/cli",
+      "WPTalents\\Collector\\": "classes/collectors",
+      "WPTalents\\Core\\": "classes/core",
+      "WPTalents\\Types\\": "classes/types"
     }
   }
 }

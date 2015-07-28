@@ -1,4 +1,9 @@
 <?php
+/**
+ * WordPress.org forums collector that is hooked to a cron event.
+ *
+ * @package WPTalent
+ */
 
 namespace WPTalents\Collector;
 
@@ -9,40 +14,46 @@ use \DOMXPath;
  * Class Forums_Collector
  * @package WPTalents\Collector
  */
-class Forums_Collector extends Collector {
-
+class Forums_Collector {
 	/**
-	 * @access public
-	 * @return mixed
-	 */
-	public function get_data() {
-
-		$data = get_user_meta( $this->user->ID, '_wptalents_forums', true );
-
-		if ( ( ! $data ||
-			( isset( $data['expiration'] ) && time() >= $data['expiration'] ) )
-			&& $this->options['may_renew']
-		) {
-			add_action( 'shutdown', array( $this, '_retrieve_data' ) );
-		}
-
-		if ( ! $data ) {
-			return 0;
-		}
-
-		return $data['data'];
-
-	}
-
-	/**
-	 * @access protected
+	 * Retrieve user data from the WordPress.org forums.
+	 *
+	 * @param int $user_id User ID.
 	 *
 	 * @return bool
 	 */
-	public function _retrieve_data() {
+	public static function retrieve_data( $user_id ) {
+		$user = get_user_by( 'id', $user_id );
 
-		$url = 'https://wordpress.org/support/profile/' . $this->options['username'];
+		if ( ! $user ) {
+			return false;
+		}
 
+		$intl_forums_base = xprofile_get_field_data( 'International Support Forums', $user_id );
+
+		if ( '' !== $intl_forums_base ) {
+			$url = 'https://' . $intl_forums_base . '.forums.wordpress.org/profile/' . $user->user_login;
+
+			$data = self::_retrieve_forums_data( $url );
+
+			bp_update_user_meta( $user_id, '_wptalents_forums_' . $intl_forums_base, $data );
+		}
+
+		$url = 'https://wordpress.org/support/profile/' . $user->user_login;
+
+		$data = self::_retrieve_forums_data( $url );
+
+		return bp_update_user_meta( $user_id, '_wptalents_forums', $data );
+	}
+
+	/**
+	 * Retrieve the forums data from a given site.
+	 *
+	 * @param string $url The forums profile URL.
+	 *
+	 * @return array|bool Data on success, false otherwise.
+	 */
+	public static function _retrieve_forums_data( $url ) {
 		$body = wp_remote_retrieve_body( wp_safe_remote_get( $url ) );
 
 		if ( '' === $body ) {
@@ -62,23 +73,23 @@ class Forums_Collector extends Collector {
 		$page_numbers    = $finder->query( '//*[contains(@class, "page-numbers")]' );
 
 		$data = array(
-			'replies' => '',
-			'threads' => '',
-			'total_replies'  => '',
+			'replies'       => '',
+			'threads'       => '',
+			'total_replies' => '',
 		);
 
 		if ( $page_numbers->length ) {
 
 			$total_pages = $page_numbers->item( $page_numbers->length / 2 - 2 )->nodeValue;
 
-			// It's not 100% accurate, as there may be not so many replies on the last page
+			// It's not 100% accurate, as there may be not so many replies on the last page.
 			$data['total_replies'] = $total_pages * $recent_replies->length;
 
 		} else {
 			$data['total_replies'] = $recent_replies->length;
 		}
 
-		/** @var $reply \DOMNode */
+		/* @var $reply \DOMNode */
 		foreach ( $recent_replies as $reply ) {
 			$a_text = $finder->query( 'a', $reply )->item( 0 )->nodeValue;
 			$a_href = $finder->query( 'a', $reply )->item( 0 )->getAttribute( 'href' );
@@ -89,7 +100,7 @@ class Forums_Collector extends Collector {
 			$data['replies'][] = array(
 				'title' => $a_text,
 				'url'   => esc_url_raw( $a_href ),
-				'date'  => str_replace( '.', '', trim( $matches[0] ) )
+				'date'  => str_replace( '.', '', trim( $matches[0] ) ),
 			);
 		}
 
@@ -103,19 +114,10 @@ class Forums_Collector extends Collector {
 			$data['threads'][] = array(
 				'title' => $a_text,
 				'url'   => esc_url_raw( $a_href ),
-				'date'  => str_replace( '.', '', trim( $matches[0] ) )
+				'date'  => str_replace( '.', '', trim( $matches[0] ) ),
 			);
 		}
 
-		$data = array(
-			'data'       => $data,
-			'expiration' => time() + $this->expiration,
-		);
-
-		update_user_meta( $this->user->ID, '_wptalents_forums', $data );
-
 		return $data;
-
 	}
-
 }
