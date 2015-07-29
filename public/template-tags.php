@@ -457,7 +457,7 @@ function wptalents_ep_prepare_user( $user_id ) {
  * @return array
  */
 function wptalents_ep_prepare_meta( $user_id ) {
-	$meta = (array) get_post_meta( $user_id );
+	$meta = (array) get_user_meta( $user_id );
 
 	if ( empty( $meta ) ) {
 		return array();
@@ -466,7 +466,7 @@ function wptalents_ep_prepare_meta( $user_id ) {
 	$prepared_meta = array();
 
 	foreach ( $meta as $key => $value ) {
-		if ( ! is_protected_meta( $key ) ) {
+		if ( ! is_protected_meta( $key, 'user' ) ) {
 			$prepared_meta[ $key ] = maybe_unserialize( $value );
 		}
 	}
