@@ -415,7 +415,6 @@ function wptalents_ep_prepare_user( $user_id ) {
 		'user_email'                 => $user->user_email,
 		'user_registered'            => $user->user_registered,
 		'permalink'                  => bp_core_get_user_domain( $user->ID, $user->user_nicename, $user->user_login ),
-		'usermeta'                   => wptalents_ep_prepare_meta( $user->ID ),
 		// Properties specific to BuddyPress and WP Talents.
 		'member_type'                => bp_get_member_type( $user->ID ),
 		'score'                      => wptalents_get_score( $user->ID ),
