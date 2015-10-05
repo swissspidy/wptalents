@@ -179,6 +179,263 @@ class ElasticPress extends WP_Stack_Plugin2 {
 						),
 					),
 				),
+				array(
+					'template_plugins' => array(
+						'path_match' => 'plugins.*',
+						'mapping'    => array(
+							'type'       => 'object',
+							'path'       => 'full',
+							'properties' => array(
+								'active_installs'   => array(
+									'type' => 'integer',
+								),
+								'banner'            => array(
+									'type' => 'string',
+								),
+								'contributors'      => array(
+									'type' => 'string',
+								),
+								'icon'              => array(
+									'type' => 'string',
+								),
+								'last_updated'      => array(
+									'type' => 'date_hour_minute_second',
+								),
+								'name'              => array(
+									'type' => 'string',
+								),
+								'rating'            => array(
+									'type' => 'float',
+								),
+								'short_description' => array(
+									'type' => 'string',
+								),
+								'slug'              => array(
+									'type' => 'string',
+								),
+								'tested'            => array(
+									'type' => 'string',
+								),
+								'version'           => array(
+									'type' => 'string',
+								),
+							),
+						),
+					),
+				),
+				array(
+					'template_favorite_plugins' => array(
+						'path_match' => 'favorite_plugins.*',
+						'mapping'    => array(
+							'type'       => 'object',
+							'path'       => 'full',
+							'properties' => array(
+								'active_installs'   => array(
+									'type' => 'integer',
+								),
+								'banner'            => array(
+									'type' => 'string',
+								),
+								'contributors'      => array(
+									'type' => 'string',
+								),
+								'icon'              => array(
+									'type' => 'string',
+								),
+								'last_updated'      => array(
+									'type' => 'date_hour_minute_second',
+								),
+								'name'              => array(
+									'type' => 'string',
+								),
+								'rating'            => array(
+									'type' => 'float',
+								),
+								'short_description' => array(
+									'type' => 'string',
+								),
+								'slug'              => array(
+									'type' => 'string',
+								),
+								'tested'            => array(
+									'type' => 'string',
+								),
+								'version'           => array(
+									'type' => 'string',
+								),
+							),
+						),
+					),
+				),
+				array(
+					'template_themes' => array(
+						'path_match' => 'themes.*',
+						'mapping'    => array(
+							'type'       => 'object',
+							'path'       => 'full',
+							'properties' => array(
+								'description'    => array(
+									'type' => 'integer',
+								),
+								'downloaded'     => array(
+									'type' => 'string',
+								),
+								'last_updated'   => array(
+									'type' => 'date_hour_minute_second',
+								),
+								'name'           => array(
+									'type' => 'string',
+								),
+								'rating'         => array(
+									'type' => 'float',
+								),
+								'screenshot_url' => array(
+									'type' => 'string',
+								),
+								'slug'           => array(
+									'type' => 'string',
+								),
+								'version'        => array(
+									'type' => 'string',
+								),
+							),
+						),
+					),
+				),
+				array(
+					'template_favorite_themes' => array(
+						'path_match' => 'favorite_themes.*',
+						'mapping'    => array(
+							'type'       => 'object',
+							'path'       => 'full',
+							'properties' => array(
+								'description'    => array(
+									'type' => 'integer',
+								),
+								'downloaded'     => array(
+									'type' => 'string',
+								),
+								'last_updated'   => array(
+									'type' => 'date_hour_minute_second',
+								),
+								'name'           => array(
+									'type' => 'string',
+								),
+								'rating'         => array(
+									'type' => 'float',
+								),
+								'screenshot_url' => array(
+									'type' => 'string',
+								),
+								'slug'           => array(
+									'type' => 'string',
+								),
+								'version'        => array(
+									'type' => 'string',
+								),
+							),
+						),
+					),
+				),
+				array(
+					'template_wpseo' => array(
+						'path_match' => 'wpse.*',
+						'mapping'    => array(
+							'type'       => 'object',
+							'path'       => 'full',
+							'properties' => array(
+								'badge_counts'  => array(
+									'type' => 'integer',
+								),
+								'creation_date' => array(
+									'type' => 'date_hour_minute_second',
+								),
+								'reputation'    => array(
+									'type' => 'integer',
+								),
+								'user_id'       => array(
+									'type' => 'integer',
+								),
+							),
+						),
+					),
+				),
+				array(
+					'template_xprofile' => array(
+						'path_match' => 'xprofile.*',
+						'mapping'    => array(
+							'type'       => 'object',
+							'path'       => 'full',
+							// XProfile Fields with IDs.
+							'properties' => array(
+								// Website.
+								'field_2'  => array(
+									'type' => 'string',
+								),
+								// Twitter.
+								'field_3'  => array(
+									'type' => 'string',
+								),
+								// Facebook.
+								'field_4'  => array(
+									'type' => 'string',
+								),
+								// LinkedIn.
+								'field_5'  => array(
+									'type' => 'string',
+								),
+								// Location.
+								'field_6'  => array(
+									'type' => 'string',
+								),
+								// Job.
+								'field_8'  => array(
+									'type' => 'string',
+								),
+								// Google+.
+								'field_9'  => array(
+									'type' => 'string',
+								),
+								// Badges.
+								'field_10' => array(
+									'type' => 'string',
+								),
+								// Slack.
+								'field_18' => array(
+									'type' => 'string',
+								),
+								// WordPress.com VIP?
+								'field_19' => array(
+									'type' => 'string',
+								),
+								// Dawn Patrol.
+								'field_21' => array(
+									'type' => 'string',
+								),
+								// Dawn Patrol Video.
+								'field_22' => array(
+									'type' => 'string',
+								),
+								// GitHub.
+								'field_23' => array(
+									'type' => 'string',
+								),
+								// Bitbucket.
+								'field_27' => array(
+									'type' => 'string',
+								),
+								// Bio.
+								'field_28' => array(
+									'type' => 'string',
+								),
+								// Member on WordPress.org since.
+								'field_52' => array(
+									'type' => 'date',
+								),
+							),
+						),
+					),
+				),
 			),
 			'_all'              => array(
 				'analyzer' => 'simple',
@@ -241,34 +498,44 @@ class ElasticPress extends WP_Stack_Plugin2 {
 					'type' => 'long',
 				),
 				'changesets'               => array(
-					'type' => 'object',
+					'type' => 'string',
 				),
 				// Plugins & Themes.
 				'plugins'                  => array(
-					'type' => 'object',
+					'type' => 'string',
+				),
+				'favorite_plugins'         => array(
+					'type' => 'string',
 				),
 				'themes'                   => array(
-					'type' => 'object',
+					'type' => 'string',
+				),
+				'favorite_themes'          => array(
+					'type' => 'string',
 				),
 				// WordPress.tv.
 				'videos'                   => array(
-					'type' => 'object',
+					'type' => 'string',
 				),
 				// WordPress Codex.
 				'codex_count'              => array(
 					'type' => 'long',
 				),
+				// WordPress Stack Exchange.
+				'wpse'                     => array(
+					'type' => 'string',
+				),
+				//
 				// Team members and companies.
-				// 'team'                     => array( 'type' => 'object', ),
+				// 'team'                     => array( 'type' => 'string', ),
+				// XProfile fields.
+				// Badges.
+				'xprofile'                 => array(
+					'type' => 'string',
+				),
 				// Location fields.
 				'location'                 => array(
 					'type' => 'geo_point',
-				),
-				'city'                     => array(
-					'type' => 'string',
-				),
-				'country'                  => array(
-					'type' => 'string',
 				),
 			),
 		);
