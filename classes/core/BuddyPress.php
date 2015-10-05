@@ -242,7 +242,7 @@ class BuddyPress extends WP_Stack_Plugin2 {
 	public function bp_setup_nav() {
 		global $bp;
 		$bp->bp_nav['profile']['position'] = 10;
-		$bp->bp_nav['activty']['position'] = 15;
+		$bp->bp_nav['activity']['position'] = 15;
 
 		bp_core_new_nav_item( array(
 			'name'                => __( 'Overview', 'wptalents' ),
