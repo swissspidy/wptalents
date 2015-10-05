@@ -41,7 +41,14 @@ class Stack_Exchange_Collector {
 			return false;
 		}
 
-		update_user_meta( $user_id, '_wptalents_wpse', $body->items[0] );
+		$data = array(
+			'badge_counts'  => (array) $body->items[0]->badge_counts,
+			'creation_date' => date( 'Y-m-d', $body->items[0]->creation_date ),
+			'reputation'    => absint( $body->items[0]->reputation ),
+			'user_id'       => absint( $body->items[0]->user_id ),
+		);
+
+		bp_update_user_meta( $user_id, '_wptalents_wpse', $data );
 
 		return true;
 	}

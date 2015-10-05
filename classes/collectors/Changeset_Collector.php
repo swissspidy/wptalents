@@ -69,9 +69,9 @@ class Changeset_Collector {
 			preg_match( '/#([0-9]*)/', $finder->query( '../dd', $node )->item( 0 )->nodeValue, $matches );
 
 			$changesets[] = array(
-				'changeset'   => $changeset[2],
+				'changeset'   => absint( $changeset[2] ),
 				'description' => $description[1],
-				'ticket'      => $matches[1],
+				'ticket'      => absint( $matches[1] ),
 			);
 		}
 
@@ -80,6 +80,6 @@ class Changeset_Collector {
 			'changesets'  => $changesets,
 		);
 
-		return update_user_meta( $user_id, '_wptalents_changesets', $data );
+		return bp_update_user_meta( $user_id, '_wptalents_changesets', $data );
 	}
 }
