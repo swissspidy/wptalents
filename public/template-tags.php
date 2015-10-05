@@ -315,6 +315,33 @@ function wptalents_get_codex_count( $user_id = null ) {
 }
 
 /**
+ * Get WPSE data for a user.
+ *
+ * @param int $user_id User ID. Defaults to the currently displayed user.
+ *
+ * @return int
+ */
+function wptalents_get_wpse_data( $user_id = null ) {
+	if ( ! $user_id ) {
+		$user_id = bp_displayed_user_id();
+	}
+
+	$user = get_user_by( 'id', $user_id );
+
+	if ( ! $user ) {
+		return array();
+	}
+
+	$data = bp_get_user_meta( $user_id, '_wptalents_wpse', true );
+
+	if ( is_array( $data ) && ! empty( $data ) ) {
+		return $data;
+	}
+
+	return array();
+}
+
+/**
  * Get the plugins for a user.
  *
  * @param int $user_id User ID. Defaults to the currently displayed user.
@@ -333,6 +360,34 @@ function wptalents_get_plugins( $user_id = null ) {
 	}
 
 	$plugins = bp_get_user_meta( $user_id, '_wptalents_plugins', true );
+
+	if ( is_array( $plugins ) && ! empty( $plugins ) ) {
+		return $plugins;
+	}
+
+	return array();
+}
+
+/**
+ * Get the favorite plugins for a user.
+ *
+ * @param int $user_id User ID. Defaults to the currently displayed user.
+ *
+ * @return int
+ */
+function wptalents_get_favorite_plugins( $user_id = null ) {
+	if ( ! $user_id ) {
+		$user_id = bp_displayed_user_id();
+	}
+
+	$user = get_user_by( 'id', $user_id );
+
+	if ( ! $user ) {
+		return array();
+	}
+
+	$plugins = bp_get_user_meta( $user_id, '_wptalents_favorite_plugins', true );
+
 	if ( is_array( $plugins ) && ! empty( $plugins ) ) {
 		return $plugins;
 	}
@@ -359,6 +414,34 @@ function wptalents_get_themes( $user_id = null ) {
 	}
 
 	$themes = bp_get_user_meta( $user_id, '_wptalents_themes', true );
+
+	if ( is_array( $themes ) && ! empty( $themes ) ) {
+		return $themes;
+	}
+
+	return array();
+}
+
+/**
+ * Get the favorite themes for a user.
+ *
+ * @param int $user_id User ID. Defaults to the currently displayed user.
+ *
+ * @return int
+ */
+function wptalents_get_favorite_themes( $user_id = null ) {
+	if ( ! $user_id ) {
+		$user_id = bp_displayed_user_id();
+	}
+
+	$user = get_user_by( 'id', $user_id );
+
+	if ( ! $user ) {
+		return array();
+	}
+
+	$themes = bp_get_user_meta( $user_id, '_wptalents_favorite_themes', true );
+
 	if ( is_array( $themes ) && ! empty( $themes ) ) {
 		return $themes;
 	}
@@ -430,18 +513,56 @@ function wptalents_ep_prepare_user( $user_id ) {
 		'changesets'                 => wptalents_get_changesets( $user->ID ),
 		// Plugins & Themes.
 		'plugins'                    => wptalents_get_plugins( $user->ID ),
+		'favorite_plugins'           => wptalents_get_favorite_plugins( $user->ID ),
 		'themes'                     => wptalents_get_themes( $user->ID ),
+		'favorite_themes'            => wptalents_get_favorite_themes( $user->ID ),
 		// WordPress.tv.
 		'videos'                     => wptalents_get_videos( $user->ID ),
 		// WordPress Codex.
 		'codex_count'                => wptalents_get_codex_count( $user->ID ),
+		// WordPress Stack Exchange.
+		'wpse'                       => wptalents_get_wpse_data( $user->ID ),
 		// Team members and companies.
 		// 'team'                       => array(),
 		// Location fields.
-		// 'location'                   => array(),
-		// 'city'                       => '',
-		// 'country'                    => ,
-		// Todo: Profile fields (Slack, Website, etc.).
+		'location'                   => array(
+			'lat'  => 0,
+			'long' => 0,
+		),
+		'xprofile'                   => array(
+			// Website.
+			'field_2'  => xprofile_get_field_data( 2, $user->ID ),
+			// Twitter.
+			'field_3'  => xprofile_get_field_data( 3, $user->ID ),
+			// Facebook.
+			'field_4'  => xprofile_get_field_data( 4, $user->ID ),
+			// LinkedIn.
+			'field_5'  => xprofile_get_field_data( 5, $user->ID ),
+			// Location.
+			'field_6'  => xprofile_get_field_data( 6, $user->ID ),
+			// Job.
+			'field_8'  => xprofile_get_field_data( 8, $user->ID ),
+			// Google+.
+			'field_9'  => xprofile_get_field_data( 9, $user->ID ),
+			// Badges.
+			'field_10' => xprofile_get_field_data( 10, $user->ID ),
+			// Slack.
+			'field_18' => xprofile_get_field_data( 18, $user->ID ),
+			// WordPress.com VIP?
+			'field_19' => xprofile_get_field_data( 19, $user->ID ),
+			// Dawn Patrol.
+			'field_21' => xprofile_get_field_data( 21, $user->ID ),
+			// Dawn Patrol Video.
+			'field_22' => xprofile_get_field_data( 22, $user->ID ),
+			// GitHub.
+			'field_23' => xprofile_get_field_data( 23, $user->ID ),
+			// Bitbucket.
+			'field_27' => xprofile_get_field_data( 27, $user->ID ),
+			// Bio.
+			'field_28' => xprofile_get_field_data( 28, $user->ID ),
+			// Member on WordPress.org since.
+			'field_52' => xprofile_get_field_data( 52, $user->ID ),
+		),
 	);
 
 	return $args;
