@@ -175,7 +175,7 @@ class Talent_Command extends \WP_CLI_Command {
 		$errors = array();
 
 		while ( true ) {
-			$args = apply_filters( 'ep_index_posts_args', array(
+			$args = apply_filters( 'ep_index_user_args', array(
 				'per_page' => $users_per_page,
 				'page'     => $page,
 			) );
@@ -259,7 +259,7 @@ class Talent_Command extends \WP_CLI_Command {
 
 		// Make sure we actually have something to index.
 		if ( empty( $this->users ) ) {
-			WP_CLI::error( 'There are no posts to index.' );
+			WP_CLI::error( 'There are no users to index.' );
 		}
 
 		$flatten = array();
@@ -296,13 +296,13 @@ class Talent_Command extends \WP_CLI_Command {
 			} else {
 				foreach ( $response['items'] as $item ) {
 					if ( ! empty( $item['index']['_id'] ) ) {
-						$this->failed_posts[] = $item['index']['_id'];
+						$this->failed_users[] = $item['index']['_id'];
 					}
 				}
 				$attempts = 0;
 			}
 		} else {
-			// There were no errors, all the posts were added.
+			// There were no errors, all the users were added.
 			$attempts = 0;
 		}
 	}
@@ -311,19 +311,19 @@ class Talent_Command extends \WP_CLI_Command {
 	 * Send any bulk indexing errors
 	 */
 	private function send_bulk_errors() {
-		if ( ! empty( $this->failed_posts ) ) {
+		if ( ! empty( $this->failed_users ) ) {
 			$error_text = __( "The following users failed to index:\r\n\r\n", 'wptalents' );
-			foreach ( $this->failed_posts as $failed ) {
-				$failed_post = get_post( $failed );
-				if ( $failed_post ) {
-					$error_text .= "- {$failed}: " . $failed_post->post_title . "\r\n";
+			foreach ( $this->failed_users as $failed ) {
+				$failed_user = get_user_by( 'id', $failed );
+				if ( $failed_user ) {
+					$error_text .= "- {$failed}: " . $failed_user->display_name . "\r\n";
 				}
 			}
 
 			WP_CLI::log( $error_text );
 
 			// Clear failed posts after printing to the screen.
-			$this->failed_posts = array();
+			$this->failed_users = array();
 		}
 	}
 
