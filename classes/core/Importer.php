@@ -7,10 +7,7 @@
 
 namespace WPTalents\Core;
 
-use stdClass;
 use WP_Error;
-use WPTalents\Collector\Gravatar_Collector;
-use WPTalents\Collector\Profile_Collector;
 
 /**
  * Importer class.
